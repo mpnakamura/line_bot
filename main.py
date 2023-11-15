@@ -1,5 +1,6 @@
 from flask import Flask, request, abort
 import os
+import openai
 from linebot import LineBotApi, WebhookHandler
 from linebot.models import TextSendMessage
 from linebot.exceptions import InvalidSignatureError
@@ -10,10 +11,13 @@ app = Flask(__name__)
 # 環境変数から設定を取得
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
 LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 # LINE API設定
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
+openai.api_key = OPENAI_API_KEY
+
 
 HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
 Heroku = "https://{}.herokuapp.com/".format(HEROKU_APP_NAME)
@@ -37,9 +41,18 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    
+    custom_prompt = f"フレンドリーでエンゲージメントの高いトーンで、以下のメッセージに返信してください: '{event.message.text}'"
+    response = openai.ChatCompletion.create(
+      model="gpt-3.5-turbo", # ここで使用するモデルを指定
+      prompt=custom_prompt, # ユーザーから受け取ったテキスト
+      max_tokens=50 # 返信の最大トークン数
+    )
+    reply_text = response.choices[0].text.strip()
+
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text=event.message.text)
+        TextSendMessage(text=reply_text)
     )
 
 if __name__ == "__main__":
