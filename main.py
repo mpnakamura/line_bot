@@ -41,11 +41,11 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    custom_prompt = f"フレンドリーでエンゲージメントの高いトーンで、以下のメッセージに返信してください: '{event.message.text}'"
+    custom_prompt = f"フレンドリーでエンゲージメントの高いトーンで、高齢者でもわかりやすい内容で、以下のメッセージに返信してください: '{event.message.text}'"
     response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",  # モデル指定
         messages=[{"role": "system", "content": custom_prompt}],  # メッセージとしてプロンプトを指定
-        max_tokens=50,
+        max_tokens=300,
         temperature=0.7,
         top_p=1
     )
