@@ -41,21 +41,25 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    
-    custom_prompt = f"フレンドリーでエンゲージメントの高いトーンで、以下のメッセージに返信してください: '{event.message.text}'"
-    response = openai.chat.completions.create(
-      model="gpt-3.5-turbo", # ここで使用するモデルを指定
-      prompt=custom_prompt, # ユーザーから受け取ったテキスト
-      max_tokens=50, # 返信の最大トークン数
-       temperature=0.7,  # 生成時のランダム性の制御
-      top_p=1,  #
+    messages = [
+        {"role": "user", "content": event.message.text}
+    ]
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        max_tokens=50,
+        temperature=0.7,
+        top_p=1
     )
-    reply_text = response.choices[0].text.strip()
+
+    reply_text = response.choices[0].message['content'].strip()
 
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply_text)
     )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
