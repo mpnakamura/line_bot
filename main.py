@@ -1,6 +1,6 @@
 from flask import Flask, request, abort
 import requests, os
-from linebot import LineBotApi, WebhookHandler
+from linebot.v3 import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageMessage, ImageSendMessage, FollowEvent, UnfollowEvent
 from PIL import Image
@@ -135,8 +135,13 @@ def push():
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute('SELECT * FROM users ORDER BY random() LIMIT 1')
-            (to_user,) = cur.fetchone()
-    line_bot_api.multicast([to_user], TextSendMessage(text="今日もお疲れさん!!"))
+            result = cur.fetchone()
+            if result is not None:
+                (to_user,) = result
+                line_bot_api.multicast([to_user], TextSendMessage(text="今日もお疲れさん!!"))
+            else:
+                print("ユーザーが見つかりません。")
+
 
 
 # アプリの起動
