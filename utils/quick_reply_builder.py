@@ -13,4 +13,20 @@ def create_quick_reply():
         ]
         
     )
+
+
+#詐欺について
+def create_fraud_quick_reply():
+    quick_reply = QuickReply(
+        items=[
+            QuickReplyButton(action=MessageAction(label="投資にまつわることですか？", text="投資詐欺")),
+            QuickReplyButton(action=MessageAction(label="お金を請求されていますか？", text="金銭請求")),
+            QuickReplyButton(action=MessageAction(label="還付金についてですか？", text="還付金詐欺"))
+        ]
+    )
+
+
+    
     return quick_reply
+
+   
