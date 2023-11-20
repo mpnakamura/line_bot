@@ -29,4 +29,5 @@ def generate_response(user_message, category_selected):
         temperature=0.7,
         top_p=1
     )
-    return response.choices[0].message.content.strip()
+    reply_text = response.choices[0].message.content.strip()  
+    return reply_text 

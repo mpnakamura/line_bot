@@ -13,15 +13,16 @@ session_states = {}
 def handle_message(event):
     user_id = event.source.user_id
     user_message = event.message.text
-
     # カテゴリ選択を処理
     if user_message == "カテゴリ選択":
         session_states[user_id] = {"category_selected": None}
         reply = TextSendMessage(text="どのカテゴリについて知りたいですか？", quick_reply=create_quick_reply())
+        line_bot_api.reply_message(event.reply_token, reply)
     # 詐欺カテゴリ選択を処理
     elif user_message == "詐欺":
         session_states[user_id] = {"category_selected": "詐欺"}
         reply = TextSendMessage(text="詐欺に関する詳細な情報は何ですか？", quick_reply=create_fraud_quick_reply())
+        line_bot_api.reply_message(event.reply_token, reply)
     # その他のメッセージに対する応答
     else:
         category_selected = session_states.get(user_id, {}).get("category_selected")
@@ -29,3 +30,4 @@ def handle_message(event):
         # カテゴリに基づいて応答した後、セッションをリセット
         session_states[user_id] = {"category_selected": None}
         reply = TextSendMessage(text=reply_text)
+        line_bot_api.reply_message(event.reply_token, reply)
