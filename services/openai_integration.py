@@ -6,18 +6,15 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 def generate_response(user_message):
     category_prompts = {
-    "投資詐欺": "投資詐欺を見分け、防ぐ方法についてアドバイスしてください。280文字以内で返信してください。",
-    "金銭請求": "金銭請求の詐欺を見分け、対処する方法についてアドバイスしてください。280文字以内で返信してください。",
-    "還付金詐欺": "還付金詐欺を見分け、対処する方法についてアドバイスしてください。280文字以内で返信してください。",
+    "投資詐欺": "多いとされる投資詐欺を羅列して、解説ください。必ず280文字以内で返信してください。",
+    "金銭請求": "多いとされる金銭請求の詐欺を羅列して解説してください。必ず280文字以内で返信してください。",
+    "還付金詐欺": "多いとされる還付金詐欺を羅列して解説してください。必ず280文字以内で返信してください。",
     # 他のカテゴリのためのプロンプトもここに追加}
     }
 
-
-    if user_message in category_prompts:
-        custom_prompt = category_prompts[user_message]
-    else:
-        # ユーザーメッセージがカテゴリプロンプトにない場合のデフォルトプロンプト
-        custom_prompt = "フレンドリーでエンゲージメントの高いトーンで、わかりやすい内容で、280文字以内で応答してください。"
+    custom_prompt = category_prompts.get(user_message, 
+        "フレンドリーでエンゲージメントの高いトーンで、わかりやすい内容で、必ず280文字以内で応答してください。"
+    )
 
     response = openai_client.chat.completions.create(
         model="gpt-4-1106-preview",
