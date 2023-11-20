@@ -34,7 +34,7 @@ def handle_message(event):
     # 詐欺カテゴリ選択を処理
     elif user_message == "詐欺":
         session_states[user_id] = {"category_selected": "詐欺"}
-        reply = TextSendMessage(text="詐欺に関する詳細な情報は何ですか？", quick_reply=create_fraud_template_message())
+        reply = reply = create_fraud_template_message() 
         line_bot_api.reply_message(event.reply_token, reply)
     # その他のメッセージに対する応答
     else:
