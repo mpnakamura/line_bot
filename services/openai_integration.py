@@ -1,7 +1,7 @@
 from openai import OpenAI
 import os
 
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 category_prompts = {
@@ -17,17 +17,22 @@ default_prompt = "フレンドリーでエンゲージメントの高いトー�
 
 
 def generate_response(user_message, category_selected):
-    if category_selected:
-        custom_prompt = category_prompts.get(category_selected, default_prompt)
-    else:
-        custom_prompt = default_prompt
+    try:
+        if category_selected:
+            custom_prompt = category_prompts.get(category_selected, default_prompt) + "\n" + user_message
+        else:
+            custom_prompt = default_prompt + "\n" + user_message
 
-    response = openai_client.chat.completions.create(
-        model="gpt-4-1106-preview",
-        messages=[{"role": "system", "content": custom_prompt}],
-        max_tokens=300,
-        temperature=0.7,
-        top_p=1
-    )
-    reply_text = response.choices[0].message.content.strip()  
-    return reply_text 
+        response = openai_client.chat.completions.create(
+            model="gpt-4-1106-preview",
+            messages=[{"role": "system", "content": custom_prompt}],
+            max_tokens=300,
+            temperature=0.7,
+            top_p=1
+        )
+        reply_text = response.choices[0].message.content.strip()
+        return reply_text
+    except Exception as e:
+        # エラーをログに記録
+        print(f"Error: {e}")
+        return "申し訳ありません。エラーが発生しました。"

@@ -8,6 +8,17 @@ import os
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+def handle_message(event):
+    user_id = event.source.user_id
+    user_message = event.message.text
+    logging.info(f"Received message from {user_id}: {user_message}")
+
+
+
 session_states = {}
 
 def handle_message(event):
