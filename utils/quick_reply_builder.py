@@ -84,7 +84,7 @@ def create_fraud_template_message():
     carousel_template = CarouselTemplate(
         columns=[
             CarouselColumn(
-                thumbnail_image_url="https://drive.google.com/uc?export=view&id=1llgLkKBvaLlitcfSs3r1pFZ2pxHdfyhe",  # 投資詐欺の画像URL
+                thumbnail_image_url="https://drive.google.com/uc?export=view&id=1IJwLB9jMIiyvHJZHp1mNr8C7-JXl78kb",  # 投資詐欺の画像URL
                 title="投資詐欺とは？",
                 text="悩みを解消しましょう",
                 actions=[
@@ -95,7 +95,7 @@ def create_fraud_template_message():
                 ]
             ),
             CarouselColumn(
-                thumbnail_image_url="https://drive.google.com/uc?export=view&id=1llgLkKBvaLlitcfSs3r1pFZ2pxHdfyhe",  # 金銭請求の画像URL
+                thumbnail_image_url="https://drive.google.com/uc?export=view&id=1E_Gtfy5-eEOZZwRp0QreUa9b9a7RiEGx",  # 金銭請求の画像URL
                 title="金銭請求とは？",
                 text="悩みを解消しましょう",
                 actions=[
@@ -106,7 +106,7 @@ def create_fraud_template_message():
                 ]
             ),
             CarouselColumn(
-                thumbnail_image_url="https://drive.google.com/uc?export=view&id=17YABB9SQf8KzXD_oBNn-7eiXfN9eUjFg",  # 還付金詐欺の画像URL
+                thumbnail_image_url="https://drive.google.com/uc?export=view&id=1166hlorEQ8DZD1Fkx62BS3h3Uth-reZr",  # 還付金詐欺の画像URL
                 title="還付金詐欺とは？",
                 text="悩みを解消しましょう",
                 actions=[
