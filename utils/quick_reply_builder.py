@@ -14,6 +14,8 @@ def create_quick_reply():
         
     )
 
+    return quick_reply
+
 
 #詐欺について
 def create_fraud_quick_reply():
@@ -26,7 +28,7 @@ def create_fraud_quick_reply():
     )
 
 
-    
+
     return quick_reply
 
    
