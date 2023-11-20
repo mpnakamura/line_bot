@@ -1,6 +1,6 @@
 from linebot.models import TextSendMessage
 from services.openai_integration import generate_response
-from utils.quick_reply_builder import create_quick_reply,create_fraud_quick_reply
+from utils.quick_reply_builder import create_template_message,create_fraud_template_message
 from linebot import LineBotApi
 import os
 
@@ -24,15 +24,17 @@ session_states = {}
 def handle_message(event):
     user_id = event.source.user_id
     user_message = event.message.text
+
     # カテゴリ選択を処理
-    if user_message == "カテゴリ選択":
+    if user_message == "カテゴリを選択する":
         session_states[user_id] = {"category_selected": None}
-        reply = TextSendMessage(text="どのカテゴリについて知りたいですか？", quick_reply=create_quick_reply())
+        # カルーセルテンプレートメッセージを使用
+        reply = create_template_message()
         line_bot_api.reply_message(event.reply_token, reply)
     # 詐欺カテゴリ選択を処理
     elif user_message == "詐欺":
         session_states[user_id] = {"category_selected": "詐欺"}
-        reply = TextSendMessage(text="詐欺に関する詳細な情報は何ですか？", quick_reply=create_fraud_quick_reply())
+        reply = TextSendMessage(text="詐欺に関する詳細な情報は何ですか？", quick_reply=create_fraud_template_message())
         line_bot_api.reply_message(event.reply_token, reply)
     # その他のメッセージに対する応答
     else:
