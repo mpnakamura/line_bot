@@ -86,7 +86,7 @@ def create_fraud_template_message():
             CarouselColumn(
                 thumbnail_image_url="https://drive.google.com/uc?export=view&id=1llgLkKBvaLlitcfSs3r1pFZ2pxHdfyhe",  # 投資詐欺の画像URL
                 title="投資詐欺とは？",
-                text="悩みを解消しましょう。"
+                text="悩みを解消しましょう",
                 actions=[
                     MessageTemplateAction(
                         label="投資詐欺について聞く",
@@ -97,7 +97,7 @@ def create_fraud_template_message():
             CarouselColumn(
                 thumbnail_image_url="https://drive.google.com/uc?export=view&id=1llgLkKBvaLlitcfSs3r1pFZ2pxHdfyhe",  # 金銭請求の画像URL
                 title="金銭請求とは？",
-                text="悩みを解消しましょう。"
+                text="悩みを解消しましょう",
                 actions=[
                     MessageTemplateAction(
                         label="金銭請求について聞く",
@@ -108,7 +108,7 @@ def create_fraud_template_message():
             CarouselColumn(
                 thumbnail_image_url="https://drive.google.com/uc?export=view&id=17YABB9SQf8KzXD_oBNn-7eiXfN9eUjFg",  # 還付金詐欺の画像URL
                 title="還付金詐欺とは？",
-                text="悩みを解消しましょう。"
+                text="悩みを解消しましょう",
                 actions=[
                     MessageTemplateAction(
                         label="還付金詐欺について聞く",
