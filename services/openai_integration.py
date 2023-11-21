@@ -26,7 +26,7 @@ def generate_response(context, category_selected):
         response = openai_client.chat.completions.create(
             model="gpt-3.5-turbo-1106",
             messages=[{"role": "system", "content": custom_prompt}],
-            max_tokens=500,
+            max_tokens=450,
             temperature=0.7,
             top_p=1
         )

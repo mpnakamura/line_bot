@@ -1,6 +1,5 @@
 import os
 import psycopg2
-import uuid
 
 DATABASE_URL = os.environ['DATABASE_URL']
 
@@ -39,7 +38,7 @@ def initialize_db():
 
 def get_recent_messages(line_user_id, limit=3):
     """
-    特定のユーザーIDに関連する最新のメッセージを取得する関数。
+    特定のユーザーIDに関連する最新の3件のメッセージを取得する関数。
     """
     conn = get_db_connection()
     try:
