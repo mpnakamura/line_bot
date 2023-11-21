@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from datetime import datetime
 
 DATABASE_URL = os.environ['DATABASE_URL']
 
@@ -10,6 +11,7 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def initialize_db():
+    
     """
     テーブルとインデックスを作成する関数。
     アプリケーションの起動時に一度だけ呼び出されることを想定。
@@ -32,6 +34,15 @@ def initialize_db():
             cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_lineUserId ON Messages (lineUserId);
             """)
+            # UserTokenUsage テーブル作成
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS UserTokenUsage (
+                user_id VARCHAR(255) NOT NULL,
+                date DATE NOT NULL,
+                tokens_used INT DEFAULT 0,
+                PRIMARY KEY (user_id, date)
+            );
+            """)
         conn.commit()
     finally:
         conn.close()
@@ -53,20 +64,7 @@ def get_recent_messages(line_user_id, limit=4):
     finally:
         conn.close()
 
-def save_message(id, line_user_id, content, role):
-    """
-    新しいメッセージをデータベースに保存する関数。
-    """
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("""
-            INSERT INTO Messages (id, lineUserId, content, role, createdAt)
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP);
-            """, (id, line_user_id, content, role))
-            conn.commit()
-    finally:
-        conn.close()
+
 
 def save_message(id, line_user_id, content, role):
     """
@@ -95,6 +93,43 @@ def save_message(id, line_user_id, content, role):
             conn.commit()
     finally:
         conn.close()
+def update_token_usage(user_id, tokens):
+    """
+    ユーザーの1日あたりのトークン使用量を更新する。
+    """
+    date_today = datetime.now().date()
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            INSERT INTO UserTokenUsage (user_id, date, tokens_used)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (user_id, date)
+            DO UPDATE SET tokens_used = UserTokenUsage.tokens_used + EXCLUDED.tokens_used;
+            """, (user_id, date_today, tokens))
+            conn.commit()
+    finally:
+        conn.close()
+
+def check_token_limit(user_id, token_limit):
+    """
+    ユーザーが1日あたりのトークン使用量の制限に達しているか確認する。
+    """
+    date_today = datetime.now().date()
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            SELECT tokens_used FROM UserTokenUsage
+            WHERE user_id = %s AND date = %s;
+            """, (user_id, date_today))
+            result = cursor.fetchone()
+            if result and result[0] >= token_limit:
+                return True
+            return False
+    finally:
+        conn.close()
+
 
 # データベース初期化関数の呼び出し
 initialize_db()
