@@ -68,5 +68,33 @@ def save_message(id, line_user_id, content, role):
     finally:
         conn.close()
 
+def save_message(id, line_user_id, content, role):
+    """
+    新しいメッセージをデータベースに保存し、古いメッセージを削除する関数。
+    """
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 新しいメッセージを挿入
+            cursor.execute("""
+            INSERT INTO Messages (id, lineUserId, content, role, createdAt)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP);
+            """, (id, line_user_id, content, role))
+
+            # 最新の3件を除いて古いメッセージを削除
+            cursor.execute("""
+            DELETE FROM Messages
+            WHERE id NOT IN (
+                SELECT id FROM Messages
+                WHERE lineUserId = %s
+                ORDER BY createdAt DESC
+                LIMIT 5
+            ) AND lineUserId = %s;
+            """, (line_user_id, line_user_id))
+
+            conn.commit()
+    finally:
+        conn.close()
+
 # データベース初期化関数の呼び出し
 initialize_db()
