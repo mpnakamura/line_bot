@@ -36,7 +36,7 @@ def initialize_db():
     finally:
         conn.close()
 
-def get_recent_messages(line_user_id, limit=3):
+def get_recent_messages(line_user_id, limit=4):
     """
     特定のユーザーIDに関連する最新の3件のメッセージを取得する関数。
     """
