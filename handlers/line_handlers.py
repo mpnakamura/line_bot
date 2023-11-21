@@ -5,7 +5,7 @@ from linebot import LineBotApi
 import os
 from db import get_recent_messages
 import uuid
-from db import save_message,check_token_limit
+from db import save_message,check_token_limit,update_token_usage
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -16,7 +16,13 @@ def handle_message(event):
     user_id = event.source.user_id
     user_message = event.message.text
 
-    token_limit = 1  # トークンの上限
+    tokens_used = sum(1 if char.isascii() else 2 for char in user_message)
+
+    # トークン使用量の更新
+    update_token_usage(user_id, tokens_used)
+
+    # トークン制限のチェック
+    token_limit = 10 # トークンの上限
     if check_token_limit(user_id, token_limit):
         # トークン上限に達した場合の通知
         limit_message = "1日で相談できる上限に達しました。明日またご利用ください。"

@@ -93,6 +93,7 @@ def save_message(id, line_user_id, content, role):
             conn.commit()
     finally:
         conn.close()
+        
 def update_token_usage(user_id, tokens):
     """
     ユーザーの1日あたりのトークン使用量を更新する。
