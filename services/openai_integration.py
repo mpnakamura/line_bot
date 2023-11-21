@@ -16,12 +16,12 @@ default_prompt = "親切で丁寧な口調で情報をわかりやすく説明�
 
 
 
-def generate_response(user_message, category_selected):
+def generate_response(context, category_selected):
     try:
         if category_selected:
-            custom_prompt = category_prompts.get(category_selected, default_prompt) + "\n" + user_message
+            custom_prompt = category_prompts.get(category_selected, default_prompt) + "\n" + context
         else:
-            custom_prompt = default_prompt + "\n" + user_message
+            custom_prompt = default_prompt + "\n" + context
 
         response = openai_client.chat.completions.create(
             model="gpt-3.5-turbo-1106",
