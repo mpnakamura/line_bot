@@ -1,4 +1,4 @@
-from linebot.models import CarouselTemplate,ConfirmTemplate, CarouselColumn,PostbackAction ,MessageTemplateAction, TemplateSendMessage
+from linebot.models import CarouselTemplate,ButtonsTemplate, CarouselColumn,PostbackAction ,MessageTemplateAction, TemplateSendMessage
 
 def create_template_message():
     template_message = TemplateSendMessage(
@@ -63,9 +63,10 @@ def create_template_message():
 
 
 
-def create_budget_management_confirmation_message():
-    # 確認メッセージテンプレートの作成
-    confirm_template = ConfirmTemplate(
+def create_budget_management_buttons_message():
+    # ボタンテンプレートの作成
+    buttons_template = ButtonsTemplate(
+        title="家計簿の管理",
         text="家計簿の管理について学びましょう。どのトピックに関心がありますか？",
         actions=[
             MessageTemplateAction(
@@ -83,10 +84,12 @@ def create_budget_management_confirmation_message():
         ]
     )
 
-    # 確認メッセージテンプレートメッセージを作成
+    # ボタンテンプレートメッセージを作成
     template_message = TemplateSendMessage(
-        alt_text="家計簿の管理に関する確認",
-        template=confirm_template
+        alt_text="家計簿の管理に関する選択肢",
+        template=buttons_template
     )
 
     return template_message
+
+# 以降のコードでは、この関数を呼び出してメッセージを生成します。

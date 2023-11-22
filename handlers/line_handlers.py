@@ -1,6 +1,6 @@
 from linebot.models import TextSendMessage
 from services.openai_integration import generate_response
-from utils.quick_reply_builder import create_template_message, create_budget_management_confirmation_message
+from utils.quick_reply_builder import create_template_message, create_budget_management_buttons_message
 from linebot import LineBotApi
 import os
 from db import get_recent_messages
@@ -45,8 +45,8 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply)
     # 家計簿の管理を選択を処理
     elif user_message == "家計簿の管理":
-        session_states[user_id] = {"category_selected": "お金の管理"}
-        reply = create_budget_management_confirmation_message()
+        session_states[user_id] = {"category_selected": "家計簿の管理"}
+        reply = create_budget_management_buttons_message()
         line_bot_api.reply_message(event.reply_token, reply)
     # その他のメッセージに対する応答
     else:
