@@ -42,12 +42,11 @@ def handle_message(event):
     if user_message == "アイネクトの得意なこと":
         session_states[user_id] = {"category_selected": None}
         reply = create_template_message()
-        line_bot_api.reply_message(event.reply_token, reply)
+
     # 家計簿の管理を選択を処理
     elif user_message == "家計簿の管理":
         session_states[user_id] = {"category_selected": "家計簿の管理"}
         reply = create_budget_management_buttons_message()
-        line_bot_api.reply_message(event.reply_token, reply)
     # その他のメッセージに対する応答
     else:
         category_selected = session_states.get(user_id, {}).get("category_selected")
