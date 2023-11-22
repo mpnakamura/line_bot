@@ -43,10 +43,10 @@ def handle_message(event):
     if user_message in ["質問に基づいた家計簿の作成", "支出、収入の計算と分析", "家計簿アプリのおすすめのアプリ紹介"]:
         session_states[user_id] = {"category_selected": user_message}
         print(f"User {user_id}: Category selected '{user_message}'")
-        # ここで応答を生成するためのロジックを追加
         reply_text = generate_response(context + "\n" + user_message, user_message)
         reply = TextSendMessage(text=reply_text)
         line_bot_api.reply_message(event.reply_token, reply)
+        session_states[user_id] = {"category_selected": None}  # セッションをリセット
     # カテゴリ選択を処理
     elif user_message == "アイネクトの得意なこと":
         session_states[user_id] = {"category_selected": None}
