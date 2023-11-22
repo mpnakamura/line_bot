@@ -12,11 +12,7 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
 session_states = {}
 
-budget_management_options = {
-    "家計簿の作成方法": "質問に基づいた家計簿の作成",
-    "支出・収入の分析": "支出、収入の計算と分析",
-    "家計簿アプリの紹介": "家計簿アプリのおすすめのアプリ紹介"
-}
+
 
 def handle_message(event):
     user_id = event.source.user_id
@@ -45,22 +41,25 @@ def handle_message(event):
     context = "\n".join([msg[0] for msg in recent_messages])  # 過去のメッセージを結合
 
     # カテゴリ選択を処理
-    if user_message in budget_management_options:
-        session_states[user_id] = {"category_selected": budget_management_options[user_message]}
-        reply_text = "カテゴリー「{}」が選択されました。質問をお聞かせください。".format(user_message)
-        reply = TextSendMessage(text=reply_text)
+    if user_message == "アイネクトの得意なこと":
+        session_states[user_id] = {"category_selected": None}
+        reply = create_template_message()
+        line_bot_api.reply_message(event.reply_token, reply)
+    # 家計簿の管理を選択を処理
     elif user_message == "家計簿の管理":
         session_states[user_id] = {"category_selected": "家計簿の管理"}
         reply = create_budget_management_buttons_message()
+        line_bot_api.reply_message(event.reply_token, reply)
+    # その他のメッセージに対する応答
     else:
         category_selected = session_states.get(user_id, {}).get("category_selected")
-        print(f"User {user_id}: Generating response for category '{category_selected}'")  # デバッグ情報
         reply_text = generate_response(context + "\n" + user_message, category_selected)
-       
-        session_states[user_id] = {"category_selected": None}
-        print(f"User {user_id}: Category reset after response")  # デバッグ情報
-        reply = TextSendMessage(text=reply_text)
-
+        
+        # アシスタントからの応答を保存
         save_message(str(uuid.uuid4()), user_id, reply_text, "assistant")
+
+        # カテゴリに基づいて応答した後、セッションをリセット
+        session_states[user_id] = {"category_selected": None}
+        reply = TextSendMessage(text=reply_text)
 
     line_bot_api.reply_message(event.reply_token, reply)
