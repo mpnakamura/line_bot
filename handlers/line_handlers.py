@@ -5,72 +5,60 @@ from linebot import LineBotApi
 import os
 from db import get_recent_messages
 import uuid
-from db import save_message,check_token_limit,update_token_usage
+from db import save_message, check_token_limit, update_token_usage
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
 session_states = {}
 
-
-
 def handle_message(event):
     user_id = event.source.user_id
     user_message = event.message.text
 
     tokens_used = sum(1 if char.isascii() else 2 for char in user_message)
-
-    # トークン使用量の更新
     update_token_usage(user_id, tokens_used)
 
-    # トークン制限のチェック
-    token_limit = 1000 # トークンの上限
-    if check_token_limit(user_id, token_limit):
-        # トークン上限に達した場合の通知
+    if check_token_limit(user_id, 1000):
         limit_message = "1日で相談できる上限に達しました。明日またご利用ください。"
         reply = TextSendMessage(text=limit_message)
         line_bot_api.reply_message(event.reply_token, reply)
         return
 
-    # ユーザーからのメッセージを保存
     new_uuid = str(uuid.uuid4())
     save_message(new_uuid, user_id, user_message, "user")
-
-    # 過去のメッセージを取得
     recent_messages = get_recent_messages(user_id)
-    context = "\n".join([msg[0] for msg in recent_messages])  # 過去のメッセージを結合
+    context = "\n".join([msg[0] for msg in recent_messages])
 
-    if user_message in ["質問に基づいた家計簿の作成", "支出、収入の計算と分析", "家計簿アプリのおすすめのアプリ紹介"]:
-        session_states[user_id] = {"category_selected": user_message}
-        print(f"User {user_id}: Category selected '{user_message}'")
-        reply_text = generate_response(context + "\n" + user_message, user_message)
-        reply = TextSendMessage(text=reply_text)
-        line_bot_api.reply_message(event.reply_token, reply)
-        session_states[user_id] = {"category_selected": None}  # セッションをリセット
-    # カテゴリ選択を処理
+    if user_message == "質問に基づいた家計簿の作成":
+        reply_text = "家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）..."
+    elif user_message == "支出、収入の計算と分析":
+        reply_text = "支出と収入の分析には、まず全ての収入源と支出項目を把握することが重要です。...（詳細な説明）..."
+    elif user_message == "家計簿アプリのおすすめのアプリ紹介":
+        reply_text = "おすすめの家計簿アプリには「おかねレコ」などがあります。このアプリは...（詳細な説明）..."
+
     elif user_message == "アイネクトの得意なこと":
         session_states[user_id] = {"category_selected": None}
-        print(f"User {user_id}: Category reset to None")  # デバッグ情報
+        print(f"User {user_id}: Category reset to None")
         reply = create_template_message()
         line_bot_api.reply_message(event.reply_token, reply)
-    # 家計簿の管理を選択を処理
+
     elif user_message == "家計簿の管理":
         session_states[user_id] = {"category_selected": "家計簿の管理"}
-        print(f"User {user_id}: Category selected '家計簿の管理'")  # デバッグ情報
+        print(f"User {user_id}: Category selected '家計簿の管理'")
         reply = create_budget_management_buttons_message()
         line_bot_api.reply_message(event.reply_token, reply)
-    # その他のメッセージに対する応答
+
     else:
-        category_selected = session_states.get(user_id, {}).get("category_selected")
-        print(f"User {user_id}: Generating response for category '{category_selected}'")  # デバッグ情報
-        reply_text = generate_response(context + "\n" + user_message, category_selected)
-        
-        # アシスタントからの応答を保存
+        # その他のメッセージに対してはGPTモデルを用いて応答を生成
+        reply_text = generate_response(context + "\n" + user_message)
         save_message(str(uuid.uuid4()), user_id, reply_text, "assistant")
-
-        # カテゴリに基づいて応答した後、セッションをリセット
-        session_states[user_id] = {"category_selected": None}
-        print(f"User {user_id}: Category reset after response")  # デバッグ情報
+        print(f"User {user_id}: Generating response")
         reply = TextSendMessage(text=reply_text)
+        line_bot_api.reply_message(event.reply_token, reply)
+        session_states[user_id] = {"category_selected": None}
+        print(f"User {user_id}: Category reset after response")
+        
+        reply = TextSendMessage(text=reply_text)
+        line_bot_api.reply_message(event.reply_token, reply)
 
-    line_bot_api.reply_message(event.reply_token, reply)
