@@ -1,6 +1,6 @@
 from linebot.models import TextSendMessage
 from services.openai_integration import generate_response
-from utils.quick_reply_builder import create_template_message, create_fraud_template_message
+from utils.quick_reply_builder import create_template_message, create_budget_management_confirmation_message
 from linebot import LineBotApi
 import os
 from db import get_recent_messages
@@ -22,7 +22,7 @@ def handle_message(event):
     update_token_usage(user_id, tokens_used)
 
     # トークン制限のチェック
-    token_limit = 10 # トークンの上限
+    token_limit = 1000 # トークンの上限
     if check_token_limit(user_id, token_limit):
         # トークン上限に達した場合の通知
         limit_message = "1日で相談できる上限に達しました。明日またご利用ください。"
@@ -39,14 +39,14 @@ def handle_message(event):
     context = "\n".join([msg[0] for msg in recent_messages])  # 過去のメッセージを結合
 
     # カテゴリ選択を処理
-    if user_message == "カテゴリを選択する":
+    if user_message == "アイネクトの得意なこと":
         session_states[user_id] = {"category_selected": None}
         reply = create_template_message()
         line_bot_api.reply_message(event.reply_token, reply)
-    # 詐欺カテゴリ選択を処理
-    elif user_message == "詐欺":
-        session_states[user_id] = {"category_selected": "詐欺"}
-        reply = create_fraud_template_message()
+    # 家計簿の管理を選択を処理
+    elif user_message == "家計簿の管理":
+        session_states[user_id] = {"category_selected": "お金の管理"}
+        reply = create_budget_management_confirmation_message()
         line_bot_api.reply_message(event.reply_token, reply)
     # その他のメッセージに対する応答
     else:
