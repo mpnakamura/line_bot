@@ -1,7 +1,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import psycopg2
-from linebot import LineBotApi
+from linebot.v3 import LineBotApi
 from linebot.models import TextSendMessage
 import os
 

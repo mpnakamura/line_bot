@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 import os
 from openai import OpenAI  # OpenAIクライアントのインポート
-from linebot import LineBotApi, WebhookHandler
+from linebot.v3 import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage
 from handlers.line_handlers import handle_message 
@@ -54,7 +54,9 @@ def callback():
 handler.add(MessageEvent, message=TextMessage)(handle_message)
 
 
-scheduler.start()
+if not scheduler.running:
+    scheduler.start()
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
