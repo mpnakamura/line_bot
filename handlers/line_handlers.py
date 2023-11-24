@@ -31,6 +31,8 @@ def handle_message(event):
     recent_messages = get_recent_messages(user_id)
     context = "\n".join([msg[0] for msg in recent_messages])
 
+    reply = None
+    
     if user_message == "予定の管理":
         reply = TextSendMessage(text="どのような予定ですか？", quick_reply=QuickReply(items=[
             QuickReplyButton(action=MessageAction(label="定期的な予定", text="定期的な予定")),
