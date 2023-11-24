@@ -44,13 +44,14 @@ def initialize_db():
             );
             """)
             cursor.execute("""
-            CREATE TABLE UserSelections (
-                user_id VARCHAR(255) PRIMARY KEY,
-                selection VARCHAR(255),
-                details TEXT,
-                datetime TIMESTAMP
-            );
-            """)
+CREATE TABLE IF NOT EXISTS UserSelections (
+    user_id VARCHAR(255) PRIMARY KEY,
+    selection VARCHAR(255),
+    details TEXT,
+    datetime TIMESTAMP
+);
+""")
+
             
         conn.commit()
     finally:
