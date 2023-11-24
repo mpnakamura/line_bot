@@ -1,4 +1,4 @@
-from linebot.models import TextSendMessage
+from linebot.models import TextSendMessage,QuickReply,QuickReplyButton,MessageAction
 from services.openai_integration import generate_response
 from utils.quick_reply_builder import create_template_message, create_budget_management_buttons_message
 from linebot import LineBotApi
@@ -6,6 +6,7 @@ import os
 from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
+from reminder_handlers import handle_reminder_selection, handle_reminder_detail, handle_reminder_datetime
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -29,6 +30,23 @@ def handle_message(event):
     save_message(new_uuid, user_id, user_message, "user")
     recent_messages = get_recent_messages(user_id)
     context = "\n".join([msg[0] for msg in recent_messages])
+
+    if user_message == "予定の管理":
+        # 初期応答を送信
+        reply = TextSendMessage(text="どのような予定ですか？", quick_reply=QuickReply(items=[
+            QuickReplyButton(action=MessageAction(label="定期的な予定", text="定期的な予定")),
+            QuickReplyButton(action=MessageAction(label="単発の予定", text="単発の予定"))
+        ]))
+        line_bot_api.reply_message(event.reply_token, reply)
+    elif user_message in ["定期的な予定", "単発の予定"]:
+        handle_reminder_selection(event, line_bot_api)
+    elif session_states.get(user_id) == {"category_selected": "予定の詳細入力"}:
+        handle_reminder_detail(event, line_bot_api)
+    elif session_states.get(user_id) == {"category_selected": "日時の入力"}:
+        handle_reminder_datetime(event, line_bot_api)
+        session_states[user_id] = {"category_selected": None}
+
+    
 
     if user_message == "質問に基づいた家計簿の作成":
         reply_text = "家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）..."
@@ -58,7 +76,7 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply)
         session_states[user_id] = {"category_selected": None}
         print(f"User {user_id}: Category reset after response")
-        
+
         reply = TextSendMessage(text=reply_text)
         line_bot_api.reply_message(event.reply_token, reply)
 

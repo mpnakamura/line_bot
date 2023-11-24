@@ -43,6 +43,15 @@ def initialize_db():
                 PRIMARY KEY (user_id, date)
             );
             """)
+            cursor.execute("""
+            CREATE TABLE UserSelections (
+                user_id VARCHAR(255) PRIMARY KEY,
+                selection VARCHAR(255),
+                details TEXT,
+                datetime TIMESTAMP
+            );
+            """)
+            
         conn.commit()
     finally:
         conn.close()
