@@ -11,7 +11,7 @@ default_prompt = "なるべく過去の会話を遡り適切に返答してく�
 
 
 
-def generate_response(context, category_selected):
+def generate_response(context, ):
     try:
         
         custom_prompt = default_prompt + "\n" + context
