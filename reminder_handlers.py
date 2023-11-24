@@ -1,8 +1,11 @@
-from linebot.models import TextSendMessage
+from linebot.models import TextSendMessage, QuickReply, QuickReplyButton, MessageAction
 import psycopg2
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
+import dateparser
+import logging
 
+logging.basicConfig(level=logging.INFO)
 # データベース接続設定
 DATABASE_URL = os.environ['DATABASE_URL']
 
@@ -12,32 +15,79 @@ def get_db_connection():
 def handle_reminder_selection(event, line_bot_api):
     text = event.message.text
     user_id = event.source.user_id
-    reply_message= None
-    
-    if text in ["定期的な予定", "単発の予定"]:
-        # 予定の種類に基づいて応答を生成
-        reply_message = TextSendMessage(text="予定を教えてください")
-        
+    reply_message = None
 
-        # ユーザーの選択をデータベースに保存
-        conn = get_db_connection()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                INSERT INTO UserSelections (user_id, selection)
-                VALUES (%s, %s)
-                ON CONFLICT (user_id) DO UPDATE SET selection = EXCLUDED.selection;
-                """, (user_id, text))
-            conn.commit()
-        finally:
-            conn.close()
+    if text == "定期的な予定":
+        save_user_selection(user_id, text)
+        reply_message = TextSendMessage(
+            text="頻度を選んでください。（例: 毎日、毎週月曜日、毎日10時）",
+            quick_reply=QuickReply(items=[
+                QuickReplyButton(action=MessageAction(label="毎日", text="毎日")),
+                QuickReplyButton(action=MessageAction(label="毎週", text="毎週")),
+            ])
+        )
+    elif text == "単発の予定":
+        save_user_selection(user_id, text)
+        reply_message = TextSendMessage(text="予定の詳細を教えてください")
+    
     return reply_message
+
+def save_user_selection(user_id, text):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            INSERT INTO UserSelections (user_id, selection)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id) DO UPDATE SET selection = EXCLUDED.selection;
+            """, (user_id, text))
+        conn.commit()
+    finally:
+        conn.close()
+
+def handle_frequency_selection(event, frequency, line_bot_api):
+    user_id = event.source.user_id
+    save_frequency_selection(user_id, frequency)
+    
+    # 頻度の選択後、予定の詳細を尋ねるメッセージを返す
+    return TextSendMessage(text="予定の詳細を教えてください")
+
+def save_frequency_selection(user_id, frequency):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 時刻と曜日が指定されている場合は、それぞれのカラムに保存する
+            time = None
+            weekday = None
+            if "時" in frequency:
+                try:
+                    time_str = frequency.split("時")[0].split()[-1]
+                    time = datetime.strptime(time_str, "%H").time()
+                    frequency = frequency.replace(time_str + "時", "").strip()  # 時刻部分を取り除く
+                except ValueError:
+                    # 時刻の解析に失敗した場合は、ユーザーに再入力を促す
+                    raise ValueError("時刻のフォーマットが正しくありません。")
+            if any(weekday_str in frequency for weekday_str in ["月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日"]):
+                weekday = frequency
+                frequency = "毎週"  # 曜日指定の場合は毎週として扱う
+            cursor.execute("""
+            UPDATE UserSelections SET frequency = %s, time = %s, weekday = %s WHERE user_id = %s;
+            """, (frequency, time, weekday, user_id))
+        conn.commit()
+    except ValueError as e:
+        # エラーメッセージをログに記録
+        logging.error(f"User {user_id}: {e}")
+    finally:
+        conn.close()
 
 def handle_reminder_detail(event, line_bot_api):
     user_message = event.message.text
     user_id = event.source.user_id
+    save_reminder_detail(user_id, user_message)
 
-    # 予定の詳細をデータベースに保存
+    return TextSendMessage(text="何日の何時何分に通知しますか？（例: 明日の10時、来週の月曜日）")
+
+def save_reminder_detail(user_id, user_message):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -48,52 +98,54 @@ def handle_reminder_detail(event, line_bot_api):
     finally:
         conn.close()
 
-    # 予定の詳細を入力した後に表示するメッセージ
-    return TextSendMessage(text="何日の何時何分に通知しますか？")
-
-
 def validate_datetime(input_str):
-    try:
-        # "YYYY-MM-DD HH:MM" の形式で日時が入力されることを想定
-        datetime.strptime(input_str, "%Y-%m-%d %H:%M")
-        return True
-    except ValueError:
-        return False
+    # NLPライブラリを使用して日時を解析する
+    parsed_date = dateparser.parse(input_str, languages=['ja'])
+    return parsed_date if parsed_date else None
 
 def handle_reminder_datetime(event, line_bot_api):
     user_message = event.message.text
     user_id = event.source.user_id
 
-    # 日時の形式をチェック
-    if not validate_datetime(user_message):
+    parsed_datetime = validate_datetime(user_message)
+    if not parsed_datetime:
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
-    # 予定の日時をデータベースに保存
+    # ユーザーに確認メッセージを送信
+    confirmation_message = f"{parsed_datetime.strftime('%Y-%m-%d %H:%M')}に設定しました。これでよろしいですか？"
+    # データベースに保存する前にユーザーの確認を待つ
+    # ユーザーの確認応答を処理するロジックを追加する
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text="はい"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text="いいえ"))
+    quick_reply = QuickReply(items=[confirm_button, deny_button])
+    return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
+
+def save_reminder_datetime(user_id, parsed_datetime):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
             UPDATE UserSelections SET datetime = %s WHERE user_id = %s;
-            """, (user_message, user_id))
+            """, (parsed_datetime, user_id))
         conn.commit()
     finally:
         conn.close()
 
-    # 確認メッセージの生成
+def generate_confirmation_message(user_id):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
-            SELECT details, datetime FROM UserSelections WHERE user_id = %s;
+            SELECT selection, details, frequency, datetime FROM UserSelections WHERE user_id = %s;
             """, (user_id,))
             result = cursor.fetchone()
-            details, datetime_str = result if result else (None, None)
+            selection, details, frequency, datetime = result if result else (None, None, None, None)
+
+        if selection == "定期的な予定" and frequency and datetime:
+            return f"わかりました。{frequency}の{datetime}に{details}の通知を設定しました。"
+        elif selection == "単発の予定" and datetime:
+            return f"わかりました。{datetime}に{details}の通知を設定しました。"
+        else:
+            return "エラーが発生しました。予定の設定をもう一度行ってください。"
     finally:
         conn.close()
-
-    if details and datetime_str:
-        confirmation_message = f"わかりました。{details}ですね。{datetime_str}にお伝えします。"
-    else:
-        confirmation_message = "エラーが発生しました。予定の設定をもう一度行ってください。"
-
-    return TextSendMessage(text=confirmation_message)

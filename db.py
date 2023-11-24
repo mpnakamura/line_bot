@@ -41,16 +41,25 @@ def initialize_db():
                 date DATE NOT NULL,
                 tokens_used INT DEFAULT 0,
                 PRIMARY KEY (user_id, date)
+                
             );
             """)
             cursor.execute("""
-CREATE TABLE IF NOT EXISTS UserSelections (
-    user_id VARCHAR(255) PRIMARY KEY,
-    selection VARCHAR(255),
-    details TEXT,
-    datetime TIMESTAMP
-);
-""")
+            CREATE TABLE IF NOT EXISTS UserSelections (
+                user_id VARCHAR(255) PRIMARY KEY,
+                selection VARCHAR(255),
+                details TEXT,
+                datetime TIMESTAMP
+               
+            );
+            """)
+            cursor.execute("""
+                ALTER TABLE UserSelections
+                ADD COLUMN IF NOT EXISTS frequency VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS time TIME,
+                ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS weekday VARCHAR(255);
+            """)
 
             
         conn.commit()

@@ -5,11 +5,10 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage
 from handlers.line_handlers import handle_message 
-from handlers.reminder_scheduler import scheduler
+from apscheduler.schedulers.background import BackgroundScheduler
+from handlers.reminder_scheduler import send_reminders
 
 
-
-# ここで preprocess_text 関数を使用
 
 
 app = Flask(__name__)
@@ -31,6 +30,12 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
 Heroku = "https://{}.herokuapp.com/".format(HEROKU_APP_NAME)
 
+scheduler = BackgroundScheduler()
+scheduler.add_job(send_reminders, 'interval', minutes=1)
+
+# スケジューラーを開始
+if not scheduler.running:
+    scheduler.start()
 
 
 @app.route("/")
@@ -54,8 +59,6 @@ def callback():
 handler.add(MessageEvent, message=TextMessage)(handle_message)
 
 
-if not scheduler.running:
-    scheduler.start()
 
 
 if __name__ == "__main__":
