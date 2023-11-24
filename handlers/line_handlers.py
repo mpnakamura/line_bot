@@ -1,7 +1,7 @@
 from linebot.models import TextSendMessage,QuickReply,QuickReplyButton,MessageAction
 from services.openai_integration import generate_response
 from utils.quick_reply_builder import create_template_message, create_budget_management_buttons_message
-from linebot.v3 import LineBotApi
+from linebot import LineBotApi
 import os
 from db import get_recent_messages
 import uuid

@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 import os
 from openai import OpenAI  # OpenAIクライアントのインポート
-from linebot.v3 import LineBotApi, WebhookHandler
+from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage
 from handlers.line_handlers import handle_message 
