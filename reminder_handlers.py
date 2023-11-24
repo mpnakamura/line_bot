@@ -2,6 +2,7 @@ from linebot.models import TextSendMessage
 import psycopg2
 import os
 from datetime import datetime
+
 # データベース接続設定
 DATABASE_URL = os.environ['DATABASE_URL']
 
