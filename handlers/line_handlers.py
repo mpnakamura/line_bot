@@ -32,27 +32,23 @@ def handle_message(event):
     context = "\n".join([msg[0] for msg in recent_messages])
 
     if user_message == "予定の管理":
-    # 初期応答を送信
         reply = TextSendMessage(text="どのような予定ですか？", quick_reply=QuickReply(items=[
-        QuickReplyButton(action=MessageAction(label="定期的な予定", text="定期的な予定")),
-        QuickReplyButton(action=MessageAction(label="単発の予定", text="単発の予定"))
-    ]))
-        line_bot_api.reply_message(event.reply_token, reply)
+            QuickReplyButton(action=MessageAction(label="定期的な予定", text="定期的な予定")),
+            QuickReplyButton(action=MessageAction(label="単発の予定", text="単発の予定"))
+        ]))
     elif user_message in ["定期的な予定", "単発の予定"]:
-        handle_reminder_selection(event, line_bot_api)
+        reply = handle_reminder_selection(event, line_bot_api)
         session_states[user_id] = {"category_selected": "予定の詳細入力"}
-
     elif session_states.get(user_id) == {"category_selected": "予定の詳細入力"}:
         reply = handle_reminder_detail(event, line_bot_api)
         session_states[user_id] = {"category_selected": "日時の入力"}
-        line_bot_api.reply_message(event.reply_token, reply)
-
     elif session_states.get(user_id) == {"category_selected": "日時の入力"}:
         reply = handle_reminder_datetime(event, line_bot_api)
         session_states[user_id] = {"category_selected": None}
-        line_bot_api.reply_message(event.reply_token, reply)
 
-    
+    # ここで返信を送信
+    if reply:
+        line_bot_api.reply_message(event.reply_token, reply)
 
     if user_message == "質問に基づいた家計簿の作成":
         reply_text = "家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）..."
