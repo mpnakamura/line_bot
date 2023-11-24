@@ -44,7 +44,9 @@ def handle_message(event):
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
         reply = handle_reminder_datetime(event, line_bot_api)
         session_states[user_id] = {"category_selected": None}
-
+    else:
+        # その他のメッセージに対する一般的な処理
+        reply = TextSendMessage(text=f"受け取ったメッセージ: {user_message}")
     # 応答メッセージが存在する場合、返信を送信
     if reply:
         line_bot_api.reply_message(event.reply_token, reply)
