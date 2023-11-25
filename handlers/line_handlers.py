@@ -44,30 +44,22 @@ def handle_message(event):
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
         reply = handle_reminder_datetime(event, line_bot_api)
         session_states[user_id] = {"category_selected": None}
-    else:
-    
-        if reply:
-            line_bot_api.reply_message(event.reply_token, reply)
-
-    if user_message == "質問に基づいた家計簿の作成":
+    elif user_message == "質問に基づいた家計簿の作成":
         reply_text = "家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）..."
     elif user_message == "支出、収入の計算と分析":
         reply_text = "支出と収入の分析には、まず全ての収入源と支出項目を把握することが重要です。...（詳細な説明）..."
     elif user_message == "家計簿アプリのおすすめのアプリ紹介":
         reply_text = "おすすめの家計簿アプリには「おかねレコ」などがあります。このアプリは...（詳細な説明）..."
-
     elif user_message == "アイネクトの得意なこと":
         session_states[user_id] = {"category_selected": None}
         print(f"User {user_id}: Category reset to None")
         reply = create_template_message()
         line_bot_api.reply_message(event.reply_token, reply)
-
     elif user_message == "家計簿の管理":
         session_states[user_id] = {"category_selected": "家計簿の管理"}
         print(f"User {user_id}: Category selected '家計簿の管理'")
         reply = create_budget_management_buttons_message()
         line_bot_api.reply_message(event.reply_token, reply)
-
     else:
         # その他のメッセージに対してはGPTモデルを用いて応答を生成
         reply_text = generate_response(context + "\n" + user_message)
