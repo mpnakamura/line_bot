@@ -38,12 +38,19 @@ def save_user_selection(user_id, text):
     finally:
         conn.close()
 
-def handle_frequency_selection(event, frequency, line_bot_api):
+def handle_frequency_selection(event, line_bot_api):
     user_id = event.source.user_id
-    save_frequency_selection(user_id, frequency)
-    
-    # 頻度の選択後、予定の詳細を尋ねるメッセージを返す
-    return TextSendMessage(text="予定の詳細を教えてください")
+
+    # ユーザーに頻度を選択させるクイックリプライを提供
+    reply_message = TextSendMessage(
+        text="どのような頻度で通知しますか？",
+        quick_reply=QuickReply(items=[
+            QuickReplyButton(action=MessageAction(label="毎日", text="毎日")),
+            QuickReplyButton(action=MessageAction(label="毎週月曜日", text="毎週月曜日")),
+            # 必要に応じて他のオプションを追加
+        ])
+    )
+    return reply_message
 
 def save_frequency_selection(user_id, frequency):
     conn = get_db_connection()
