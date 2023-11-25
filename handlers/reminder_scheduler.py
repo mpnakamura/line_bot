@@ -66,7 +66,7 @@ def send_recurring_reminders(reminders, cursor, today):
                 logging.error(f"Error sending recurring reminder to {user_id}: {e}")
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(send_reminders, 'interval', minutes=1)
+scheduler.add_job(send_reminders, 'interval', minutes=10)
 
 # スケジューラーの起動
 if not scheduler.running:
