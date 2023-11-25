@@ -6,7 +6,7 @@ import os
 from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
-from reminder_handlers import handle_reminder_selection, handle_reminder_detail, handle_reminder_datetime
+from reminder_handlers import handle_reminder_selection, handle_reminder_detail, handle_reminder_datetime,handle_frequency_selection
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -33,17 +33,30 @@ def handle_message(event):
 
     reply = None
 
+
+    
     if user_message == "予定の管理":
         reply = handle_reminder_selection(event, line_bot_api)
+        session_states[user_id] = {"category_selected": "予定の種類選択"}
+    elif user_message in ["定期的な予定", "単発の予定"] and session_states.get(user_id, {}).get("category_selected") == "予定の種類選択":
+        if user_message == "定期的な予定":
+            reply = handle_frequency_selection(event, user_message, line_bot_api)
+        else:
+            reply = handle_reminder_detail(event, line_bot_api)
         session_states[user_id] = {"category_selected": "予定の詳細入力"}
-    elif user_message in ["定期的な予定", "単発の予定"]:
-        reply = handle_reminder_selection(event, line_bot_api)
     elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
         reply = handle_reminder_detail(event, line_bot_api)
         session_states[user_id] = {"category_selected": "日時の入力"}
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
         reply = handle_reminder_datetime(event, line_bot_api)
         session_states[user_id] = {"category_selected": None}
+
+    # ここで返信を送信
+    if reply:
+        line_bot_api.reply_message(event.reply_token, reply)
+
+
+
     elif user_message == "質問に基づいた家計簿の作成":
         reply_text = "家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）..."
     elif user_message == "支出、収入の計算と分析":
