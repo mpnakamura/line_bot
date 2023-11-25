@@ -13,23 +13,16 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def handle_reminder_selection(event, line_bot_api):
-    text = event.message.text
     user_id = event.source.user_id
-    reply_message = None
 
-    if text == "定期的な予定":
-        save_user_selection(user_id, text)
-        reply_message = TextSendMessage(
-            text="頻度を選んでください。（例: 毎日、毎週月曜日、毎日10時）",
-            quick_reply=QuickReply(items=[
-                QuickReplyButton(action=MessageAction(label="毎日", text="毎日")),
-                QuickReplyButton(action=MessageAction(label="毎週", text="毎週")),
-            ])
-        )
-    elif text == "単発の予定":
-        save_user_selection(user_id, text)
-        reply_message = TextSendMessage(text="予定の詳細を教えてください")
-    
+    # 予定の種類を選択させるメッセージとクイックリプライを生成
+    reply_message = TextSendMessage(
+        text="どのような予定ですか？",
+        quick_reply=QuickReply(items=[
+            QuickReplyButton(action=MessageAction(label="定期的な予定", text="定期的な予定")),
+            QuickReplyButton(action=MessageAction(label="単発の予定", text="単発の予定"))
+        ])
+    )
     return reply_message
 
 def save_user_selection(user_id, text):
