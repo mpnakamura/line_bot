@@ -45,11 +45,9 @@ def handle_message(event):
         reply = handle_reminder_datetime(event, line_bot_api)
         session_states[user_id] = {"category_selected": None}
     else:
-        # その他のメッセージに対する一般的な処理
-        reply = TextSendMessage(text=f"受け取ったメッセージ: {user_message}")
-    # 応答メッセージが存在する場合、返信を送信
-    if reply:
-        line_bot_api.reply_message(event.reply_token, reply)
+    
+        if reply:
+            line_bot_api.reply_message(event.reply_token, reply)
 
     if user_message == "質問に基づいた家計簿の作成":
         reply_text = "家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）..."
