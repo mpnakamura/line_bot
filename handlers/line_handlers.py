@@ -1,4 +1,4 @@
-from linebot.models import TextSendMessage,QuickReply,QuickReplyButton,MessageAction
+from linebot.models import TextSendMessage
 from services.openai_integration import generate_response
 from utils.quick_reply_builder import create_template_message, create_budget_management_buttons_message
 from linebot import LineBotApi
@@ -6,7 +6,7 @@ import os
 from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
-from reminder_handlers import handle_reminder_selection, handle_reminder_detail,save_frequency_selection,save_user_selection,save_reminder_detail ,handle_reminder_datetime,handle_frequency_selection
+from reminder_handlers import handle_reminder_selection, handle_reminder_detail,save_frequency_selection,save_user_selection,save_reminder_detail ,handle_reminder_datetime,handle_frequency_selection,generate_confirmation_message
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -32,7 +32,6 @@ def handle_message(event):
     context = "\n".join([msg[0] for msg in recent_messages])
 
     reply = None
-
 
     
     if user_message == "予定の管理":
@@ -64,11 +63,11 @@ def handle_message(event):
         if reply is not None:
             line_bot_api.reply_message(event.reply_token, reply)
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
-        reply = handle_reminder_datetime(event, line_bot_api)
+        handle_reminder_datetime(event, line_bot_api)
+        confirmation_message = generate_confirmation_message(user_id)
+        if confirmation_message:
+            line_bot_api.push_message(user_id, TextSendMessage(text=confirmation_message))
         session_states[user_id] = {"category_selected": None}
-        if reply is not None:
-            line_bot_api.reply_message(event.reply_token, reply)
-
 
     elif user_message == "質問に基づいた家計簿の作成":
         reply_text = "家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）..."

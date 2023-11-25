@@ -38,7 +38,7 @@ def save_user_selection(user_id, text):
     finally:
         conn.close()
 
-def handle_frequency_selection(event, line_bot_api):
+def handle_frequency_selection(event, user_message, line_bot_api):
     user_id = event.source.user_id
 
     # ユーザーに頻度を選択させるクイックリプライを提供
