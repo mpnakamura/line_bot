@@ -70,11 +70,18 @@ def handle_message(event):
         session_states[user_id] = {"category_selected": None}
 
     elif user_message == "質問に基づいた家計簿の作成":
-        reply_text = "家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）..."
+        reply = TextSendMessage(text="家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）...")
+        line_bot_api.reply_message(event.reply_token, reply)
     elif user_message == "支出、収入の計算と分析":
-        reply_text = "支出と収入の分析には、まず全ての収入源と支出項目を把握することが重要です。...（詳細な説明）..."
+        reply = TextSendMessage(text="支出と収入の分析には、まず全ての収入源と支出項目を把握することが重要です。...（詳細な説明）...")
+        line_bot_api.reply_message(event.reply_token, reply)
     elif user_message == "家計簿アプリのおすすめのアプリ紹介":
-        reply_text = "おすすめの家計簿アプリには「おかねレコ」などがあります。このアプリは...（詳細な説明）..."
+        reply = TextSendMessage(text="おすすめの家計簿アプリには「おかねレコ」などがあります。このアプリは...（詳細な説明）...")
+        line_bot_api.reply_message(event.reply_token, reply)
+
+
+
+        
     elif user_message == "アイネクトの得意なこと":
         session_states[user_id] = {"category_selected": None}
         print(f"User {user_id}: Category reset to None")
