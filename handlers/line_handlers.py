@@ -38,23 +38,26 @@ def handle_message(event):
     if user_message == "予定の管理":
         reply = handle_reminder_selection(event, line_bot_api)
         session_states[user_id] = {"category_selected": "予定の種類選択"}
+        line_bot_api.reply_message(event.reply_token, reply)
+        return
     elif user_message in ["定期的な予定", "単発の予定"] and session_states.get(user_id, {}).get("category_selected") == "予定の種類選択":
         if user_message == "定期的な予定":
             reply = handle_frequency_selection(event, user_message, line_bot_api)
         else:
             reply = handle_reminder_detail(event, line_bot_api)
         session_states[user_id] = {"category_selected": "予定の詳細入力"}
+        line_bot_api.reply_message(event.reply_token, reply)
+        return
     elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
         reply = handle_reminder_detail(event, line_bot_api)
         session_states[user_id] = {"category_selected": "日時の入力"}
+        line_bot_api.reply_message(event.reply_token, reply)
+        return
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
         reply = handle_reminder_datetime(event, line_bot_api)
         session_states[user_id] = {"category_selected": None}
-
-    # ここで返信を送信
-    if reply:
         line_bot_api.reply_message(event.reply_token, reply)
-
+        return
 
 
     elif user_message == "質問に基づいた家計簿の作成":
