@@ -6,7 +6,7 @@ import os
 from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
-from reminder_handlers import handle_reminder_selection, handle_reminder_detail, handle_reminder_datetime,handle_frequency_selection
+from reminder_handlers import handle_reminder_selection, handle_reminder_detail,save_frequency_selection,save_user_selection,save_reminder_detail ,handle_reminder_datetime,handle_frequency_selection
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -37,31 +37,37 @@ def handle_message(event):
     
     if user_message == "予定の管理":
         reply = handle_reminder_selection(event, line_bot_api)
+        session_states[user_id] = {"category_selected": "予定の種類選択"}
         if reply is not None:
-            session_states[user_id] = {"category_selected": "予定の種類選択"}
             line_bot_api.reply_message(event.reply_token, reply)
-        return
-    elif user_message in ["定期的な予定", "単発の予定"] and session_states.get(user_id, {}).get("category_selected") == "予定の種類選択":
-        if user_message == "定期的な予定":
-            reply = handle_frequency_selection(event, user_message, line_bot_api)
-        else:
-            reply = handle_reminder_detail(event, line_bot_api)
+    elif user_message == "定期的な予定" and session_states.get(user_id, {}).get("category_selected") == "予定の種類選択":
+        reply = handle_frequency_selection(event, user_message, line_bot_api)
+        session_states[user_id] = {"category_selected": "頻度の入力"}
         if reply is not None:
-            session_states[user_id] = {"category_selected": "予定の詳細入力"}
             line_bot_api.reply_message(event.reply_token, reply)
-        return
+    elif user_message == "単発の予定" and session_states.get(user_id, {}).get("category_selected") == "予定の種類選択":
+        save_user_selection(user_id, "単発の予定")
+        reply = TextSendMessage(text="予定の詳細を教えてください")
+        session_states[user_id] = {"category_selected": "予定の詳細入力"}
+        if reply is not None:
+            line_bot_api.reply_message(event.reply_token, reply)
+    elif session_states.get(user_id, {}).get("category_selected") == "頻度の入力":
+        save_frequency_selection(user_id, user_message)
+        reply = TextSendMessage(text="予定の詳細を教えてください")
+        session_states[user_id] = {"category_selected": "予定の詳細入力"}
+        if reply is not None:
+            line_bot_api.reply_message(event.reply_token, reply)
     elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
-        reply = handle_reminder_detail(event, line_bot_api)
+        save_reminder_detail(user_id, user_message)
+        reply = TextSendMessage(text="何日の何時何分に通知しますか？（例: 明日の10時、来週の月曜日）")
+        session_states[user_id] = {"category_selected": "日時の入力"}
         if reply is not None:
-            session_states[user_id] = {"category_selected": "日時の入力"}
             line_bot_api.reply_message(event.reply_token, reply)
-        return
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
         reply = handle_reminder_datetime(event, line_bot_api)
+        session_states[user_id] = {"category_selected": None}
         if reply is not None:
-            session_states[user_id] = {"category_selected": None}
             line_bot_api.reply_message(event.reply_token, reply)
-        return
 
 
     elif user_message == "質問に基づいた家計簿の作成":

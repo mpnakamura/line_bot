@@ -142,3 +142,4 @@ def generate_confirmation_message(user_id):
             return "エラーが発生しました。予定の設定をもう一度行ってください。"
     finally:
         conn.close()
+
