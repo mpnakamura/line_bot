@@ -7,7 +7,7 @@ from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
 from reminder_handlers import handle_reminder_selection, handle_reminder_detail,save_frequency_selection,save_user_selection,save_reminder_detail ,handle_reminder_datetime,handle_frequency_selection,generate_confirmation_message
-
+from utils.message_responses import respond_to_user_message
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
@@ -69,19 +69,19 @@ def handle_message(event):
             line_bot_api.push_message(user_id, TextSendMessage(text=confirmation_message))
         session_states[user_id] = {"category_selected": None}
 
-    elif user_message == "質問に基づいた家計簿の作成":
-        reply = TextSendMessage(text="家計簿の作成方法については、まず収入と支出をリストアップし、...（詳細な説明）...")
+    elif user_message == "家計簿の作成方法":
+        reply = respond_to_user_message(user_message)
         line_bot_api.reply_message(event.reply_token, reply)
     elif user_message == "支出、収入の計算と分析":
-        reply = TextSendMessage(text="支出と収入の分析には、まず全ての収入源と支出項目を把握することが重要です。...（詳細な説明）...")
+        reply = respond_to_user_message(user_message)
         line_bot_api.reply_message(event.reply_token, reply)
     elif user_message == "家計簿アプリのおすすめのアプリ紹介":
-        reply = TextSendMessage(text="おすすめの家計簿アプリには「おかねレコ」などがあります。このアプリは...（詳細な説明）...")
+        reply = respond_to_user_message(user_message)
         line_bot_api.reply_message(event.reply_token, reply)
 
 
 
-        
+
     elif user_message == "アイネクトの得意なこと":
         session_states[user_id] = {"category_selected": None}
         print(f"User {user_id}: Category reset to None")

@@ -71,7 +71,7 @@ def create_budget_management_buttons_message():
         actions=[
             MessageTemplateAction(
                 label="家計簿の作成方法",
-                text="質問に基づいた家計簿の作成"
+                text="家計簿の作成方法"
             ),
             MessageTemplateAction(
                 label="支出・収入の分析",
