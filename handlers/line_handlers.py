@@ -36,38 +36,27 @@ def handle_message(event):
     
     if user_message == "予定の管理":
         reply = handle_reminder_selection(event, line_bot_api)
-        session_states[user_id] = {"category_selected": "予定の種類選択"}
-        if reply is not None:
-            line_bot_api.reply_message(event.reply_token, reply)
-    elif user_message == "定期的な予定" and session_states.get(user_id, {}).get("category_selected") == "予定の種類選択":
-        reply = handle_frequency_selection(event, user_message, line_bot_api)
-        session_states[user_id] = {"category_selected": "頻度の入力"}
-        if reply is not None:
-            line_bot_api.reply_message(event.reply_token, reply)
-    elif user_message == "単発の予定" and session_states.get(user_id, {}).get("category_selected") == "予定の種類選択":
-        save_user_selection(user_id, "単発の予定")
-        reply = TextSendMessage(text="予定の詳細を教えてください")
-        session_states[user_id] = {"category_selected": "予定の詳細入力"}
-        if reply is not None:
-            line_bot_api.reply_message(event.reply_token, reply)
-    elif session_states.get(user_id, {}).get("category_selected") == "頻度の入力":
-        save_frequency_selection(user_id, user_message)
-        reply = TextSendMessage(text="予定の詳細を教えてください")
         session_states[user_id] = {"category_selected": "予定の詳細入力"}
         if reply is not None:
             line_bot_api.reply_message(event.reply_token, reply)
     elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
         save_reminder_detail(user_id, user_message)
-        reply = TextSendMessage(text="何日の何時何分に通知しますか？（例: 明日の10時、来週の月曜日）")
+        reply = TextSendMessage(text="何日の何時何分に通知しますか？（例: 「明日の10時」、「11月28日の16時」）")
         session_states[user_id] = {"category_selected": "日時の入力"}
         if reply is not None:
             line_bot_api.reply_message(event.reply_token, reply)
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
-        handle_reminder_datetime(event, line_bot_api)
-        confirmation_message = generate_confirmation_message(user_id)
-        if confirmation_message:
-            line_bot_api.push_message(user_id, TextSendMessage(text=confirmation_message))
-        session_states[user_id] = {"category_selected": None}
+        reply = handle_reminder_datetime(event, line_bot_api)
+        if reply is not None:
+            line_bot_api.reply_message(event.reply_token, reply)
+            session_states[user_id] = {"category_selected": None}
+        else:
+        # 日時の解析に失敗した場合、ユーザーに再度入力を求めるメッセージを送信する
+            error_reply = TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
+            line_bot_api.reply_message(event.reply_token, error_reply)
+            session_states[user_id] = {"category_selected": "日時の入力"}
+
+
 
     elif user_message == "家計簿の作成方法":
         reply = respond_to_user_message(user_message)
@@ -90,6 +79,16 @@ def handle_message(event):
     elif user_message == "家計簿の管理":
         session_states[user_id] = {"category_selected": "家計簿の管理"}
         print(f"User {user_id}: Category selected '家計簿の管理'")
+        reply = create_budget_management_buttons_message()
+        line_bot_api.reply_message(event.reply_token, reply)
+    elif user_message == "節約のヒント":
+        session_states[user_id] = {"category_selected": "節約のヒント"}
+        print(f"User {user_id}: Category selected '節約のヒント'")
+        reply = create_budget_management_buttons_message()
+        line_bot_api.reply_message(event.reply_token, reply)
+    elif user_message == "投資のヒント":
+        session_states[user_id] = {"category_selected": "投資のヒント"}
+        print(f"User {user_id}: Category selected '投資のヒント'")
         reply = create_budget_management_buttons_message()
         line_bot_api.reply_message(event.reply_token, reply)
     else:

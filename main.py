@@ -31,7 +31,7 @@ HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
 Heroku = "https://{}.herokuapp.com/".format(HEROKU_APP_NAME)
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(send_reminders, 'interval', minutes=10)
+scheduler.add_job(send_reminders, 'interval', minutes=5)
 
 # スケジューラーを開始
 if not scheduler.running:

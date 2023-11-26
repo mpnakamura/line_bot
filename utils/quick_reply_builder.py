@@ -92,4 +92,33 @@ def create_budget_management_buttons_message():
 
     return template_message
 
+def create_savings_buttons_message():
+    # ボタンテンプレートの作成
+    buttons_template = ButtonsTemplate(
+        title="節約のヒント",
+        text="節約のヒントを提案します。どのトピックに関心がありますか？",
+        actions=[
+            MessageTemplateAction(
+                label="家計簿の作成方法",
+                text="家計簿の作成方法"
+            ),
+            MessageTemplateAction(
+                label="支出・収入の分析",
+                text="支出、収入の計算と分析"
+            ),
+            MessageTemplateAction(
+                label="家計簿アプリの紹介",
+                text="家計簿アプリのおすすめのアプリ紹介"
+            )
+        ]
+    )
+
+    # ボタンテンプレートメッセージを作成
+    template_message = TemplateSendMessage(
+        alt_text="家計簿の管理に関する選択肢",
+        template=buttons_template
+    )
+
+    return template_message
+
 # 以降のコードでは、この関数を呼び出してメッセージを生成します。
