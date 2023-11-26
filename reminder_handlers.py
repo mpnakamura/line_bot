@@ -21,11 +21,10 @@ def save_reminder_detail(user_id, details):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # UPSERT 操作
+            # 新しいリマインダーを追加
             cursor.execute("""
             INSERT INTO UserSelections (user_id, details, datetime)
-            VALUES (%s, %s, NULL)
-            ON CONFLICT (user_id) DO UPDATE SET details = EXCLUDED.details, datetime = NULL;
+            VALUES (%s, %s, NULL);
             """, (user_id, details))
             conn.commit()
     finally:
