@@ -37,24 +37,16 @@ def handle_message(event):
     if user_message == "予定の管理":
         reply = handle_reminder_selection(event, line_bot_api)
         session_states[user_id] = {"category_selected": "予定の詳細入力"}
-        if reply is not None:
-            line_bot_api.reply_message(event.reply_token, reply)
+        line_bot_api.reply_message(event.reply_token, reply)
     elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
         save_reminder_detail(user_id, user_message)
         reply = TextSendMessage(text="何日の何時何分に通知しますか？（例: 「明日の10時」、「11月28日の16時」）")
         session_states[user_id] = {"category_selected": "日時の入力"}
-        if reply is not None:
-            line_bot_api.reply_message(event.reply_token, reply)
+        line_bot_api.reply_message(event.reply_token, reply)
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
         reply = handle_reminder_datetime(event, line_bot_api)
-        if reply is not None:
-            line_bot_api.reply_message(event.reply_token, reply)
-            session_states[user_id] = {"category_selected": None}
-        else:
-        # 日時の解析に失敗した場合、ユーザーに再度入力を求めるメッセージを送信する
-            error_reply = TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
-            line_bot_api.reply_message(event.reply_token, error_reply)
-            session_states[user_id] = {"category_selected": "日時の入力"}
+        line_bot_api.reply_message(event.reply_token, reply)
+        session_states[user_id] = {"category_selected": None}
 
 
 
