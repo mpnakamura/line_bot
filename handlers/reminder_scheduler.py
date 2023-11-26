@@ -17,6 +17,7 @@ def get_db_connection():
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+
 def send_reminders():
     try:
         conn = get_db_connection()
@@ -27,7 +28,7 @@ def send_reminders():
             end_time = current_time + timedelta(minutes=1)
 
             cursor.execute("""
-                SELECT user_id, details FROM UserSelections
+                SELECT reminder_id, user_id, details FROM UserSelections
                 WHERE datetime BETWEEN %s AND %s;
             """, (start_time, end_time))
             reminders = cursor.fetchall()
@@ -47,13 +48,13 @@ def send_reminder_messages(reminders, cursor):
             logging.error(f"Error sending message to {user_id}: {e}")
 
 def delete_sent_reminders(reminders, cursor):
-    for user_id, _ in reminders:
+    for reminder_id, user_id, _ in reminders:
         try:
             cursor.execute("""
-                DELETE FROM UserSelections WHERE user_id = %s;
-            """, (user_id,))
+                DELETE FROM UserSelections WHERE reminder_id = %s;
+            """, (reminder_id,))
         except Exception as e:
-            logging.error(f"Error deleting reminder for {user_id}: {e}")
+            logging.error(f"Error deleting reminder {reminder_id} for user {user_id}: {e}")
 
 
 
