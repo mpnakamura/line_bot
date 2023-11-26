@@ -45,13 +45,13 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply)
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
         reply = handle_reminder_datetime(event, line_bot_api)
-        if "はい" in user_message or "いいえ" in user_message:
-            confirmation_reply = confirm_reminder(user_id, user_message, validate_datetime(user_message))
-            line_bot_api.reply_message(event.reply_token, confirmation_reply)
-            session_states[user_id] = {"category_selected": None}
-        else:
-            line_bot_api.reply_message(event.reply_token, reply)
-            session_states[user_id] = {"category_selected": "日時の確認"}
+        line_bot_api.reply_message(event.reply_token, reply)
+        session_states[user_id] = {"category_selected": "日時の確認"}
+    elif session_states.get(user_id, {}).get("category_selected") == "日時の確認":
+        confirmation_reply = confirm_reminder(user_id, user_message)
+        line_bot_api.reply_message(event.reply_token, confirmation_reply)
+        session_states[user_id] = {"category_selected": None}
+
 
 
     elif user_message == "家計簿の作成方法":
