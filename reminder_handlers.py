@@ -1,4 +1,4 @@
-from linebot.models import TextSendMessage, QuickReply, QuickReplyButton, MessageAction
+from linebot.models import TextSendMessage
 import psycopg2
 import os
 from datetime import datetime, timedelta
