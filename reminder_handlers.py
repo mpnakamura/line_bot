@@ -21,13 +21,16 @@ def save_reminder_detail(user_id, details):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # 新しい予定を挿入
+            # UPSERT 操作
             cursor.execute("""
-            INSERT INTO UserSelections (user_id, details) VALUES (%s, %s);
+            INSERT INTO UserSelections (user_id, details)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id) DO UPDATE SET details = EXCLUDED.details;
             """, (user_id, details))
-        conn.commit()
+            conn.commit()
     finally:
         conn.close()
+
 
 def validate_datetime(input_str):
     # NLPライブラリを使用して日時を解析する
