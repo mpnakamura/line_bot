@@ -51,7 +51,7 @@ def handle_message(event):
         confirmation_reply = confirm_reminder(user_id, user_message)
         line_bot_api.reply_message(event.reply_token, confirmation_reply)
         session_states[user_id] = {"category_selected": None}
-
+        
 
 
     elif user_message == "家計簿の作成方法":

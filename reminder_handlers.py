@@ -34,8 +34,12 @@ def handle_reminder_datetime(event, line_bot_api):
     user_message = event.message.text
     user_id = event.source.user_id
     parsed_datetime = validate_datetime(user_message)
+
     if not parsed_datetime:
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
+
+    # 日時の保存処理をここに追加
+    save_reminder_datetime(user_id, parsed_datetime)
 
     confirmation_message = f"{parsed_datetime.strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
     confirm_button = QuickReplyButton(action=MessageAction(label="はい", text="はい"))
@@ -43,14 +47,14 @@ def handle_reminder_datetime(event, line_bot_api):
     quick_reply = QuickReply(items=[confirm_button, deny_button])
     return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
 
-def confirm_reminder(user_id, user_message, parsed_datetime):
+def confirm_reminder(user_id, user_message):
     if user_message == "はい":
-        save_reminder_datetime(user_id, parsed_datetime)
         return TextSendMessage(text="予定を保存しました。")
     elif user_message == "いいえ":
         return TextSendMessage(text="予定の詳細をもう一度教えてください。")
     else:
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
+
 
 def save_reminder_datetime(user_id, new_datetime):
     conn = get_db_connection()
