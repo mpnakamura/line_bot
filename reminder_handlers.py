@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timedelta
 import dateparser
 import logging
+import pytz
 
 logging.basicConfig(level=logging.INFO)
 DATABASE_URL = os.environ['DATABASE_URL']
@@ -64,10 +65,12 @@ def save_reminder_datetime(user_id, new_datetime):
             SELECT reminder_id FROM UserSelections WHERE user_id = %s AND details IS NOT NULL ORDER BY reminder_id DESC LIMIT 1;
             """, (user_id,))
             latest_reminder_id = cursor.fetchone()[0]
+
+            # UTCに変換
+            utc_datetime = new_datetime.astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S%z')
             cursor.execute("""
             UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
-            """, (new_datetime, latest_reminder_id))
+            """, (utc_datetime, latest_reminder_id))
             conn.commit()
     finally:
         conn.close()
-
