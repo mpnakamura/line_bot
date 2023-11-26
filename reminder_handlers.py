@@ -15,16 +15,16 @@ def get_db_connection():
 
 def handle_reminder_selection(event, line_bot_api):
     # 単発の予定の詳細を尋ねる
-    return TextSendMessage(text="予定の詳細を聞かせてください。\n"
-                                "例：「薬を飲む時間」、「迎えの時間」、「誰かに電話の時間」")
+    return TextSendMessage(text="予定の詳細を聞かせてください。\n例：「薬を飲む時間」、「迎えの時間」、「誰かに電話の時間」")
 
 def save_reminder_detail(user_id, details):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # 新しい予定を挿入
             cursor.execute("""
-            UPDATE UserSelections SET details = %s WHERE user_id = %s;
-            """, (details, user_id))
+            INSERT INTO UserSelections (user_id, details) VALUES (%s, %s);
+            """, (user_id, details))
         conn.commit()
     finally:
         conn.close()
@@ -53,8 +53,9 @@ def save_reminder_datetime(user_id, datetime):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # 特定の予定の日時を更新
             cursor.execute("""
-            UPDATE UserSelections SET datetime = %s WHERE user_id = %s;
+            UPDATE UserSelections SET datetime = %s WHERE user_id = %s AND details IS NOT NULL ORDER BY reminder_id DESC LIMIT 1;
             """, (datetime, user_id))
         conn.commit()
     finally:
@@ -64,8 +65,9 @@ def generate_confirmation_message(user_id):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # 最新の予定を取得
             cursor.execute("""
-            SELECT details, datetime FROM UserSelections WHERE user_id = %s;
+            SELECT details, datetime FROM UserSelections WHERE user_id = %s AND details IS NOT NULL ORDER BY reminder_id DESC LIMIT 1;
             """, (user_id,))
             result = cursor.fetchone()
             details, datetime = result if result else (None, None)

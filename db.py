@@ -46,9 +46,10 @@ def initialize_db():
             """)
             cursor.execute("""
     CREATE TABLE IF NOT EXISTS UserSelections (
-        user_id VARCHAR(255) PRIMARY KEY,
-        details TEXT,
-        datetime TIMESTAMP
+    reminder_id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    details TEXT,
+    datetime TIMESTAMP,
     );
 """)
 
