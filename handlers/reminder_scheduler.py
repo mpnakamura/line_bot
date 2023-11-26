@@ -27,11 +27,22 @@ def send_reminders():
             start_time = current_time - timedelta(minutes=1)
             end_time = current_time + timedelta(minutes=1)
 
+            # 現在の時刻と検索範囲のログ出力
+            logging.info(f"Current time: {current_time}")
+            logging.info(f"Searching reminders between {start_time} and {end_time}")
+
             cursor.execute("""
                 SELECT reminder_id, user_id, details FROM UserSelections
                 WHERE datetime BETWEEN %s AND %s;
             """, (start_time, end_time))
             reminders = cursor.fetchall()
+
+            # 取得されたリマインダーのログ出力
+            if reminders:
+                logging.info(f"Found reminders: {reminders}")
+            else:
+                logging.info("No reminders found")
+
             send_reminder_messages(reminders, cursor)
             delete_sent_reminders(reminders, cursor)
         conn.commit()
@@ -39,6 +50,7 @@ def send_reminders():
         logging.error(f"Database error: {e}")
     finally:
         conn.close()
+
 
 def send_reminder_messages(reminders, cursor):
     for user_id, details in reminders:
