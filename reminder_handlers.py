@@ -1,4 +1,4 @@
-from linebot.models import TextSendMessage
+from linebot.models import TextSendMessage,QuickReply, QuickReplyButton, MessageAction
 import psycopg2
 import os
 from datetime import datetime, timedelta
@@ -46,27 +46,35 @@ def handle_reminder_datetime(event, line_bot_api):
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
     # 確認メッセージをユーザーに送信
-    confirmation_message = f"{parsed_datetime.strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？「はい」または「いいえ」で答えてください。"
-    return TextSendMessage(text=confirmation_message)
-
-def confirm_reminder(user_id, user_message, parsed_datetime):
+    confirmation_message = f"{parsed_datetime.strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text="はい"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text="いいえ"))
+    quick_reply = QuickReply(items=[confirm_button, deny_button])
+    return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
+def confirm_reminder(user_id, user_message, parsed_datetime=None):
     if user_message == "はい":
         # 日時をデータベースに保存
         save_reminder_datetime(user_id, parsed_datetime)
         return TextSendMessage(text="予定を保存しました。")
     elif user_message == "いいえ":
-        return TextSendMessage(text="承知いたしました。")
+        # 予定の詳細を再度尋ねる
+        return TextSendMessage(text="予定の詳細をもう一度教えてください。")
     else:
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
-
-def save_reminder_datetime(user_id, datetime):
+def save_reminder_datetime(user_id, new_datetime):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            # 特定の予定の日時を更新
+            # 最新のreminder_idを取得
             cursor.execute("""
-            UPDATE UserSelections SET datetime = %s WHERE user_id = %s AND details IS NOT NULL ORDER BY reminder_id DESC LIMIT 1;
-            """, (datetime, user_id))
+            SELECT reminder_id FROM UserSelections WHERE user_id = %s AND details IS NOT NULL ORDER BY reminder_id DESC LIMIT 1;
+            """, (user_id,))
+            latest_reminder_id = cursor.fetchone()[0]
+
+            # 最新のreminder_idに対して日時を更新
+            cursor.execute("""
+            UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
+            """, (new_datetime, latest_reminder_id))
             conn.commit()
     finally:
         conn.close()
