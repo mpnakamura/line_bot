@@ -49,7 +49,7 @@ def initialize_db():
     reminder_id SERIAL PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     details TEXT,
-    datetime TIMESTAMP,
+    datetime TIMESTAMP
     );
 """)
 
