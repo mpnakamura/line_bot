@@ -6,7 +6,7 @@ import os
 from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
-from reminder_handlers import handle_reminder_selection, save_reminder_detail ,handle_reminder_datetime
+from reminder_handlers import handle_reminder_selection, save_reminder_detail ,handle_reminder_datetime,confirm_reminder,validate_datetime
 from utils.message_responses import respond_to_user_message
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -45,9 +45,13 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, reply)
     elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
         reply = handle_reminder_datetime(event, line_bot_api)
-        line_bot_api.reply_message(event.reply_token, reply)
-        session_states[user_id] = {"category_selected": None}
-
+        if "はい" in user_message or "いいえ" in user_message:
+            confirmation_reply = confirm_reminder(user_id, user_message, validate_datetime(user_message))
+            line_bot_api.reply_message(event.reply_token, confirmation_reply)
+            session_states[user_id] = {"category_selected": None}
+        else:
+            line_bot_api.reply_message(event.reply_token, reply)
+            session_states[user_id] = {"category_selected": "日時の確認"}
 
 
     elif user_message == "家計簿の作成方法":

@@ -23,9 +23,9 @@ def save_reminder_detail(user_id, details):
         with conn.cursor() as cursor:
             # UPSERT 操作
             cursor.execute("""
-            INSERT INTO UserSelections (user_id, details)
-            VALUES (%s, %s)
-            ON CONFLICT (user_id) DO UPDATE SET details = EXCLUDED.details;
+            INSERT INTO UserSelections (user_id, details, datetime)
+            VALUES (%s, %s, NULL)
+            ON CONFLICT (user_id) DO UPDATE SET details = EXCLUDED.details, datetime = NULL;
             """, (user_id, details))
             conn.commit()
     finally:
@@ -45,12 +45,19 @@ def handle_reminder_datetime(event, line_bot_api):
     if not parsed_datetime:
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
-    # 日時をデータベースに保存
-    save_reminder_datetime(user_id, parsed_datetime)
-
-    # ユーザーに確認メッセージを送信
-    confirmation_message = generate_confirmation_message(user_id)
+    # 確認メッセージをユーザーに送信
+    confirmation_message = f"{parsed_datetime.strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？「はい」または「いいえ」で答えてください。"
     return TextSendMessage(text=confirmation_message)
+
+def confirm_reminder(user_id, user_message, parsed_datetime):
+    if user_message == "はい":
+        # 日時をデータベースに保存
+        save_reminder_datetime(user_id, parsed_datetime)
+        return TextSendMessage(text="予定を保存しました。")
+    elif user_message == "いいえ":
+        return TextSendMessage(text="承知いたしました。")
+    else:
+        return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
 
 def save_reminder_datetime(user_id, datetime):
     conn = get_db_connection()
@@ -60,7 +67,7 @@ def save_reminder_datetime(user_id, datetime):
             cursor.execute("""
             UPDATE UserSelections SET datetime = %s WHERE user_id = %s AND details IS NOT NULL ORDER BY reminder_id DESC LIMIT 1;
             """, (datetime, user_id))
-        conn.commit()
+            conn.commit()
     finally:
         conn.close()
 
