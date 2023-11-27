@@ -56,8 +56,8 @@ def handle_reminder_datetime(event, line_bot_api):
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
     # 日時の保存処理をここに追加
-    reminder_id = save_reminder_detail(user_id, user_message)
-    save_reminder_datetime(user_id, parsed_datetime)
+    reminder_id = event.postback.data  # POSTBACKアクションからreminder_idを取得
+    save_reminder_datetime(reminder_id, parsed_datetime)
 
     confirmation_message = f"{parsed_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
     confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
@@ -80,24 +80,19 @@ def confirm_reminder(user_id, user_message):
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
 
 
-def save_reminder_datetime(user_id, new_datetime):
+def save_reminder_datetime(reminder_id, new_datetime):
     if not isinstance(new_datetime, datetime):
-        logging.error(f"Invalid datetime object for user {user_id}")
+        logging.error(f"Invalid datetime object for reminder_id {reminder_id}")
         return
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            tokyo_datetime = new_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute("""
-            SELECT reminder_id FROM UserSelections WHERE user_id = %s AND details IS NOT NULL ORDER BY reminder_id DESC LIMIT 1;
-            """, (user_id,))
-            latest_reminder_id = cursor.fetchone()
-            if latest_reminder_id:
-                latest_reminder_id = latest_reminder_id[0]
-                tokyo_datetime = new_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
-                cursor.execute("""
-                UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
-                """, (tokyo_datetime, latest_reminder_id))
-                conn.commit()
-                logging.info(f"User ID: {user_id} - Reminder ID: {latest_reminder_id} set for Tokyo datetime: {tokyo_datetime}")
+            UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
+            """, (tokyo_datetime, reminder_id))
+            conn.commit()
+            logging.info(f"Reminder ID: {reminder_id} set for Tokyo datetime: {tokyo_datetime}")
     finally:
         conn.close()
+
