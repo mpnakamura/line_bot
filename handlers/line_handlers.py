@@ -40,14 +40,17 @@ def handle_message(event):
             session_states[user_id] = {"category_selected": "予定の詳細入力"}
 
         elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
-            save_reminder_detail(user_id, user_message)
-            reply = TextSendMessage(text="何日の何時何分に通知しますか？（例: 「明日の10時」、「11月28日の16時」）")
-            session_states[user_id] = {"category_selected": "日時の入力"}
+            reminder_id = save_reminder_detail(user_id, user_message)
+            if reminder_id:
+                reply = TextSendMessage(text="何日の何時何分に通知しますか？（例: 「明日の10時」、「11月28日の16時」）")
+                session_states[user_id] = {"category_selected": "日時の入力", "reminder_id": reminder_id}
+            else:
+                reply = TextSendMessage(text="予定の詳細を保存できませんでした。もう一度試してください。")
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
             reply = handle_reminder_datetime(event, line_bot_api)
             if reply:  # 成功した場合のみ状態を更新
-                session_states[user_id] = {"category_selected": "日時の確認"}
+                session_states[user_id] = {"category_selected": "日時の確認", "reminder_id": session_states[user_id].get("reminder_id")}
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の確認":
             confirmation_reply = confirm_reminder(user_id, user_message)
