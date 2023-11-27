@@ -20,6 +20,7 @@ LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
 def send_reminders():
+    conn = None
     try:
         conn = get_db_connection()
         with conn.cursor() as cursor:
@@ -39,7 +40,8 @@ def send_reminders():
 
             # 検索されたリマインダーの詳細をログに記録
             if reminders:
-                logging.debug(f"Found reminders: {reminders}")
+                for reminder in reminders:
+                    logging.debug(f"Reminder found: id={reminder[0]}, user_id={reminder[1]}, details={reminder[2]}")
             else:
                 logging.debug("No reminders found in the specified time range.")
 
@@ -49,7 +51,8 @@ def send_reminders():
     except Exception as e:
         logging.error(f"Database error: {e}")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 def send_reminder_messages(reminders, cursor):
     for reminder_id, user_id, details in reminders:
