@@ -11,13 +11,13 @@ import logging
 logging.basicConfig()
 logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
-DATABASE_URL = ['postgres://wlrtmqkbpdsrfi:e06b9de0d8df0366b33a6c2c2b7d8d45a4dfcee6fcc292ca2c6f4bece3aabdc5@ec2-44-213-151-75.compute-1.amazonaws.com:5432/d5vv1mhvjkkcvs']
+DATABASE_URL = os.environ['DATABASE_URL']
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
-LINE_CHANNEL_ACCESS_TOKEN = os.getenv("O6HGHHmaa93mBBb20wRYdb8px6Uohi3XSghfxfTHYRr8TkUwMokQ7lWXChAc1Dr6vrOMD9BxUQ2K8SMgs2oPZAqI+i3BMgz/SUG++a6zmR84CFxgJ6imWCGWVaB0NFhYiSxjNcp07IeDC6OODpLLTwdB04t89/1O/w1cDnyilFU=")
-line_bot_api = LineBotApi("67ba629af8822b82d05afaa4624a2924")
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
 def send_reminders():
     conn = None

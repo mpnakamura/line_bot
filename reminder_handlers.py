@@ -29,7 +29,10 @@ def save_reminder_detail(user_id, details):
 
 def validate_datetime(input_str):
     parsed_date = dateparser.parse(input_str, languages=['ja'])
-    return parsed_date if parsed_date else None
+    if isinstance(parsed_date, datetime):
+        return parsed_date
+    else:
+        return None
 
 def handle_reminder_datetime(event, line_bot_api):
     user_message = event.message.text
@@ -58,19 +61,23 @@ def confirm_reminder(user_id, user_message):
 
 
 def save_reminder_datetime(user_id, new_datetime):
+    if not isinstance(new_datetime, datetime):
+        logging.error(f"Invalid datetime object for user {user_id}")
+        return
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute("""
             SELECT reminder_id FROM UserSelections WHERE user_id = %s AND details IS NOT NULL ORDER BY reminder_id DESC LIMIT 1;
             """, (user_id,))
-            latest_reminder_id = cursor.fetchone()[0]
-
-            tokyo_datetime = new_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
-            cursor.execute("""
-            UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
-            """, (tokyo_datetime, latest_reminder_id))
-            conn.commit()
-            logging.info(f"User ID: {user_id} - Reminder ID: {latest_reminder_id} set for Tokyo datetime: {tokyo_datetime}")
+            latest_reminder_id = cursor.fetchone()
+            if latest_reminder_id:
+                latest_reminder_id = latest_reminder_id[0]
+                tokyo_datetime = new_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
+                cursor.execute("""
+                UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
+                """, (tokyo_datetime, latest_reminder_id))
+                conn.commit()
+                logging.info(f"User ID: {user_id} - Reminder ID: {latest_reminder_id} set for Tokyo datetime: {tokyo_datetime}")
     finally:
         conn.close()
