@@ -28,11 +28,21 @@ def send_reminders():
             start_time = tokyo_now - timedelta(minutes=1)
             end_time = tokyo_now + timedelta(minutes=1)
 
+            # 検索範囲の時刻をログに記録
+            logging.debug(f"Searching for reminders between {start_time} and {end_time}")
+
             cursor.execute("""
                 SELECT reminder_id, user_id, details FROM UserSelections
                 WHERE datetime BETWEEN %s AND %s;
             """, (start_time, end_time))
             reminders = cursor.fetchall()
+
+            # 検索されたリマインダーの詳細をログに記録
+            if reminders:
+                logging.debug(f"Found reminders: {reminders}")
+            else:
+                logging.debug("No reminders found in the specified time range.")
+
             send_reminder_messages(reminders, cursor)
             delete_sent_reminders(reminders, cursor)
         conn.commit()
