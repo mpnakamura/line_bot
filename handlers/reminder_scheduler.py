@@ -42,9 +42,16 @@ def send_reminders():
         conn.close()
 
 def send_reminder_messages(reminders, cursor):
-    for user_id, details in reminders:
+    for reminder_id, user_id, details in reminders:
         try:
+            # メッセージ送信前のログ記録
+            logging.debug(f"Sending message to {user_id}: {details}")
+            
             line_bot_api.push_message(user_id, TextSendMessage(text=details))
+            
+            # メッセージ送信後のログ記録
+            logging.debug(f"Message sent to {user_id}")
+
         except Exception as e:
             logging.error(f"Error sending message to {user_id}: {e}")
 
