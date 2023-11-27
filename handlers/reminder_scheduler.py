@@ -23,10 +23,10 @@ def send_reminders():
     try:
         conn = get_db_connection()
         with conn.cursor() as cursor:
-            # UTCの現在時刻を取得
-            utc_now = pytz.utc.localize(datetime.utcnow())
-            start_time = utc_now - timedelta(minutes=1)
-            end_time = utc_now + timedelta(minutes=1)
+            # Asia/Tokyoの現在時刻を取得
+            tokyo_now = pytz.timezone('Asia/Tokyo').localize(datetime.now())
+            start_time = tokyo_now - timedelta(minutes=1)
+            end_time = tokyo_now + timedelta(minutes=1)
 
             cursor.execute("""
                 SELECT reminder_id, user_id, details FROM UserSelections

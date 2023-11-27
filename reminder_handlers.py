@@ -39,12 +39,10 @@ def handle_reminder_datetime(event, line_bot_api):
     if not parsed_datetime:
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
-
-    utc_datetime = parsed_datetime.astimezone(pytz.utc)
     # 日時の保存処理をここに追加
     save_reminder_datetime(user_id, parsed_datetime)
 
-    confirmation_message = f"{parsed_datetime.strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
+    confirmation_message = f"{parsed_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
     confirm_button = QuickReplyButton(action=MessageAction(label="はい", text="はい"))
     deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text="いいえ"))
     quick_reply = QuickReply(items=[confirm_button, deny_button])
@@ -68,12 +66,11 @@ def save_reminder_datetime(user_id, new_datetime):
             """, (user_id,))
             latest_reminder_id = cursor.fetchone()[0]
 
-            # UTCに変換
-            utc_datetime = new_datetime.astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S%z')
+            tokyo_datetime = new_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute("""
             UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
-            """, (utc_datetime, latest_reminder_id))
+            """, (tokyo_datetime, latest_reminder_id))
             conn.commit()
-            logging.info(f"User ID: {user_id} - Reminder ID: {latest_reminder_id} set for UTC datetime: {utc_datetime}")
+            logging.info(f"User ID: {user_id} - Reminder ID: {latest_reminder_id} set for Tokyo datetime: {tokyo_datetime}")
     finally:
         conn.close()
