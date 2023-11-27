@@ -8,14 +8,23 @@ import pytz
 
 logging.basicConfig(level=logging.INFO)
 DATABASE_URL = os.environ['DATABASE_URL']
+session_states = {}
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode='require')
 
 def handle_reminder_selection(event, line_bot_api):
-    return TextSendMessage(text="予定の詳細を聞かせてください。\n例：「薬を飲む時間」、「迎えの時間」、「誰かに電話の時間」")
+    user_id = event.source.user_id
+    if "category_selected" not in session_states.get(user_id, {}):
+        session_states[user_id] = {"category_selected": "予定の詳細入力"}
+        return TextSendMessage(text="予定の詳細を聞かせてください。\n例：「薬を飲む時間」、「迎えの時間」、「誰かに電話の時間」")
+    # 既に「予定の詳細入力」カテゴリが選択されている場合は、何もしない
+    return None
 
 def save_reminder_detail(user_id, details):
+    # 既にリマインダーが存在するかどうかを確認
+    if "reminder_id" in session_states.get(user_id, {}):
+        return session_states[user_id]["reminder_id"]  # 既存のリマインダーIDを返す
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -25,6 +34,7 @@ def save_reminder_detail(user_id, details):
             """, (user_id, details))
             reminder_id = cursor.fetchone()[0]
             conn.commit()
+            session_states[user_id]["reminder_id"] = reminder_id  # セッション状態を更新
             return reminder_id
     finally:
         conn.close()
@@ -56,14 +66,17 @@ def handle_reminder_datetime(event, line_bot_api):
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
     # 日時の保存処理をここに追加
-    reminder_id = event.postback.data  # POSTBACKアクションからreminder_idを取得
-    save_reminder_datetime(reminder_id, parsed_datetime)
-
-    confirmation_message = f"{parsed_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
-    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
-    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"いいえ,{reminder_id}"))
-    quick_reply = QuickReply(items=[confirm_button, deny_button])
-    return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
+    if "reminder_id" in session_states.get(user_id, {}):
+        reminder_id = session_states[user_id]["reminder_id"]
+        save_reminder_datetime(reminder_id, parsed_datetime)
+        confirmation_message = f"{parsed_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
+        confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
+        deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"いいえ,{reminder_id}"))
+        quick_reply = QuickReply(items=[confirm_button, deny_button])
+        return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
+    else:
+        # reminder_idが見つからない場合はエラーメッセージを返す
+        return TextSendMessage(text="エラーが発生しました。リマインダーの詳細をもう一度入力してください。")
 
 def confirm_reminder(user_id, user_message):
     response_parts = user_message.split(',')
@@ -72,9 +85,12 @@ def confirm_reminder(user_id, user_message):
 
     answer, reminder_id = response_parts
     if answer == "はい":
+        # ここでリマインダーの確定処理を行う
+        session_states[user_id] = {"category_selected": None}  # セッション状態をクリア
         return TextSendMessage(text="予定を保存しました。")
     elif answer == "いいえ":
         delete_reminder_detail(reminder_id)
+        session_states[user_id] = {"category_selected": "予定の詳細入力"}  # セッション状態をリセット
         return TextSendMessage(text="予定の詳細をもう一度教えてください。")
     else:
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
