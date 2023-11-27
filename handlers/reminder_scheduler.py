@@ -24,16 +24,14 @@ def send_reminders():
     try:
         conn = get_db_connection()
         with conn.cursor() as cursor:
-            # Asia/Tokyoの現在時刻を取得
+            # 前回の実行時刻から現在時刻までの範囲でリマインダーを検索
+            last_run_time = pytz.timezone('Asia/Tokyo').localize(datetime.now() - timedelta(seconds=60))
             tokyo_now = pytz.timezone('Asia/Tokyo').localize(datetime.now())
-
-            # 現在時刻より前に保存されているリマインダーを検索
-            logging.debug(f"Searching for reminders before {tokyo_now}")
 
             cursor.execute("""
                 SELECT reminder_id, user_id, details FROM UserSelections
-                WHERE datetime <= %s;
-            """, (tokyo_now,))
+                WHERE datetime >= %s AND datetime <= %s;
+            """, (last_run_time, tokyo_now))
             reminders = cursor.fetchall()
 
             # 検索されたリマインダーの詳細をログに記録
@@ -41,7 +39,7 @@ def send_reminders():
                 for reminder in reminders:
                     logging.debug(f"Reminder found: id={reminder[0]}, user_id={reminder[1]}, details={reminder[2]}")
             else:
-                logging.debug("No reminders found before the current time.")
+                logging.debug("No reminders found matching the current time.")
 
             send_reminder_messages(reminders, cursor)
             delete_sent_reminders(reminders, cursor)
@@ -76,9 +74,8 @@ def delete_sent_reminders(reminders, cursor):
             logging.error(f"Error deleting reminder {reminder_id} for user {user_id}: {e}")
 
 
-
 scheduler = BackgroundScheduler()
-scheduler.add_job(send_reminders, 'interval', minutes=5)
+scheduler.add_job(send_reminders, 'interval', seconds=60)
 
 # スケジューラーの起動
 if not scheduler.running:

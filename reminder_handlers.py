@@ -21,8 +21,21 @@ def save_reminder_detail(user_id, details):
         with conn.cursor() as cursor:
             cursor.execute("""
             INSERT INTO UserSelections (user_id, details, datetime)
-            VALUES (%s, %s, NULL);
+            VALUES (%s, %s, NULL) RETURNING reminder_id;
             """, (user_id, details))
+            reminder_id = cursor.fetchone()[0]
+            conn.commit()
+            return reminder_id
+    finally:
+        conn.close()
+
+def delete_reminder_detail(reminder_id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+            DELETE FROM UserSelections WHERE reminder_id = %s;
+            """, (reminder_id,))
             conn.commit()
     finally:
         conn.close()
@@ -43,18 +56,25 @@ def handle_reminder_datetime(event, line_bot_api):
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
     # 日時の保存処理をここに追加
+    reminder_id = save_reminder_detail(user_id, user_message)
     save_reminder_datetime(user_id, parsed_datetime)
 
     confirmation_message = f"{parsed_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
-    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text="はい"))
-    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text="いいえ"))
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"いいえ,{reminder_id}"))
     quick_reply = QuickReply(items=[confirm_button, deny_button])
     return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
 
 def confirm_reminder(user_id, user_message):
-    if user_message == "はい":
+    response_parts = user_message.split(',')
+    if len(response_parts) != 2:
+        return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
+
+    answer, reminder_id = response_parts
+    if answer == "はい":
         return TextSendMessage(text="予定を保存しました。")
-    elif user_message == "いいえ":
+    elif answer == "いいえ":
+        delete_reminder_detail(reminder_id)
         return TextSendMessage(text="予定の詳細をもう一度教えてください。")
     else:
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
