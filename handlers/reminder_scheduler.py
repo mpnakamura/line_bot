@@ -75,5 +75,5 @@ def delete_sent_reminders(reminders, cursor):
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(send_reminders, 'interval', seconds=60)
+scheduler.add_job(send_reminders, 'interval',  minutes=15)
 
