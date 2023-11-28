@@ -63,6 +63,7 @@ def handle_reminder_datetime(event, line_bot_api):
     parsed_datetime = validate_datetime(user_message)
 
     if not parsed_datetime:
+        session_states[user_id]["category_selected"] = "日時の入力"
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
     # ユーザーのタイムゾーンを取得（例としてAsia/Tokyoを使用）
@@ -86,10 +87,11 @@ def handle_reminder_datetime(event, line_bot_api):
 
 def confirm_reminder(user_id, user_message):
     response_parts = user_message.split(',')
-    if len(response_parts) != 2:
+    if len(response_parts) != 2 or not response_parts[1].isdigit():
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
 
-    answer, reminder_id = response_parts
+    answer, reminder_id_str = response_parts
+    reminder_id = int(reminder_id_str)
     if answer == "はい":
         # ここでリマインダーの確定処理を行う
         session_states[user_id] = {"category_selected": None}  # セッション状態をクリア
