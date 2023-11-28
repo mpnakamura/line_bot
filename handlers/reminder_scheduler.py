@@ -77,6 +77,3 @@ def delete_sent_reminders(reminders, cursor):
 scheduler = BackgroundScheduler()
 scheduler.add_job(send_reminders, 'interval', seconds=60)
 
-# スケジューラーの起動
-if not scheduler.running:
-    scheduler.start()

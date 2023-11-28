@@ -65,18 +65,24 @@ def handle_reminder_datetime(event, line_bot_api):
     if not parsed_datetime:
         return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
 
-    # 日時の保存処理をここに追加
+    # ユーザーのタイムゾーンを取得（例としてAsia/Tokyoを使用）
+    user_timezone = 'Asia/Tokyo'  # これはユーザーによって設定されるべきです
+
     if "reminder_id" in session_states.get(user_id, {}):
         reminder_id = session_states[user_id]["reminder_id"]
         save_reminder_datetime(reminder_id, parsed_datetime)
-        confirmation_message = f"{parsed_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
+
+        # ユーザーのタイムゾーンに合わせて日時を変換
+        localized_datetime = parsed_datetime.astimezone(pytz.timezone(user_timezone))
+        confirmation_message = f"{localized_datetime.strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
+
         confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
         deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"いいえ,{reminder_id}"))
         quick_reply = QuickReply(items=[confirm_button, deny_button])
         return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
     else:
-        # reminder_idが見つからない場合はエラーメッセージを返す
         return TextSendMessage(text="エラーが発生しました。リマインダーの詳細をもう一度入力してください。")
+
 
 def confirm_reminder(user_id, user_message):
     response_parts = user_message.split(',')
@@ -103,12 +109,12 @@ def save_reminder_datetime(reminder_id, new_datetime):
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
-            tokyo_datetime = new_datetime.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')
+            utc_datetime = new_datetime.astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute("""
             UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
-            """, (tokyo_datetime, reminder_id))
+            """, (utc_datetime, reminder_id))
             conn.commit()
-            logging.info(f"Reminder ID: {reminder_id} set for Tokyo datetime: {tokyo_datetime}")
+            logging.info(f"Reminder ID: {reminder_id} set for Tokyo datetime: {utc_datetime}")
     finally:
         conn.close()
 
