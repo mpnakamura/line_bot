@@ -17,7 +17,7 @@ def handle_reminder_selection(event, line_bot_api):
     user_id = event.source.user_id
     if "category_selected" not in session_states.get(user_id, {}):
         session_states[user_id] = {"category_selected": "予定の詳細入力"}
-        return TextSendMessage(text="予定の詳細を聞かせてください。\n例：「薬を飲む時間」、「迎えの時間」、「誰かに電話の時間」")
+        return TextSendMessage(text="どんな予定か聞かせてください。\n例：「薬を飲む時間」、「迎えの時間」、「誰かに電話の時間」")
     # 既に「予定の詳細入力」カテゴリが選択されている場合は、何もしない
     return None
 
@@ -60,30 +60,48 @@ def validate_datetime(input_str):
 def handle_reminder_datetime(event, line_bot_api):
     user_message = event.message.text
     user_id = event.source.user_id
+    session_state = session_states.get(user_id, {})
+    
+    if session_state.get("category_selected") == "日時の再入力":
+        # 日時の再入力処理
+        parsed_datetime = validate_datetime(user_message)
+        if not parsed_datetime:
+            # 再び無効なフォーマットの場合
+            return TextSendMessage(text="時間を確認できませんでした。もう一度入力してください。（例: 11月28日11時、明日13時40分）")
+        
+        # 有効な日時が入力された場合の処理
+        reminder_id = session_state.get("reminder_id")
+        return process_valid_datetime(reminder_id, parsed_datetime, user_id)
+
+    # 通常の日時入力処理
     parsed_datetime = validate_datetime(user_message)
-
     if not parsed_datetime:
-        session_states[user_id]["category_selected"] = "日時の入力"
-        return TextSendMessage(text="無効な日時フォーマットです。もう一度入力してください。（例: 2023-03-10 15:30）")
+        session_states[user_id] = {"category_selected": "日時の再入力", "reminder_id": session_state.get("reminder_id")}
+        return TextSendMessage(text="時間を確認できませんでした。もう一度入力してください。（例: 11月28日11時、明日13時40分）")
 
-    # ユーザーのタイムゾーンを取得（例としてAsia/Tokyoを使用）
-    user_timezone = 'Asia/Tokyo'  # これはユーザーによって設定されるべきです
+    return process_valid_datetime(session_state.get("reminder_id"), parsed_datetime, user_id)
 
-    if "reminder_id" in session_states.get(user_id, {}):
-        reminder_id = session_states[user_id]["reminder_id"]
-        save_reminder_datetime(reminder_id, parsed_datetime)
+def process_valid_datetime(reminder_id, parsed_datetime, user_id):
+    # ...（既存のコード）
+    user_timezone = 'Asia/Tokyo'
 
-        # ユーザーのタイムゾーンに合わせて日時を変換
-        localized_datetime = parsed_datetime.astimezone(pytz.timezone(user_timezone))
-        confirmation_message = f"{localized_datetime.strftime('%Y-%m-%d %H:%M')}に予定はこれでよろしいですか？"
+    # 日時の保存
+    save_reminder_datetime(reminder_id, parsed_datetime)
 
-        confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"confirm,{reminder_id}"))
-        deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"deny,{reminder_id}"))
+    # ユーザーのタイムゾーンに合わせて日時を変換
+    localized_datetime = parsed_datetime.astimezone(pytz.timezone(user_timezone))
+    confirmation_message = f"通知する予定と時間は「{localized_datetime.strftime('%Y-%m-%d %H:%M')}」これでよろしいですか？"
 
-        quick_reply = QuickReply(items=[confirm_button, deny_button])
-        return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
-    else:
-        return TextSendMessage(text="エラーが発生しました。リマインダーの詳細をもう一度入力してください。")
+    # 確認メッセージの作成
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"confirm,{reminder_id}"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"deny,{reminder_id}"))
+    quick_reply = QuickReply(items=[confirm_button, deny_button])
+
+    # セッション状態の更新
+    session_states[user_id] = {"category_selected": "日時の確認", "reminder_id": reminder_id}
+
+    # 確認メッセージの送信
+    return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
 
 
 def confirm_reminder(user_id, user_message):
