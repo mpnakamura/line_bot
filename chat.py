@@ -105,7 +105,7 @@ def generate_question_answer(question):
     answer = ret.content
     formatted_answer = f"あなたの質問「{question}」についての回答です：\n\n{answer}\n\n"
 
-    add_ref_text = "&#8203;``【oaicite:1】``&#8203;\n"
+    add_ref_text = "参考サイト：\n"
     for i, ref in enumerate(references.keys(), 1):
         add_ref_text += f"[{i}] {references[ref]['title']}: {references[ref]['link']}\n"
 
