@@ -103,16 +103,13 @@ def generate_question_answer(question):
         return "回答生成中にエラーが発生しました。"
 
     answer = ret.content
-    formatted_answer = f"あなたの質問「{question}」についての回答です：\n\n{answer}\n"
+    formatted_answer = f"あなたの質問「{question}」についての回答です：\n\n{answer}\n\n"
 
-    i = 0
     add_ref_text = "&#8203;``【oaicite:1】``&#8203;\n"
-    for ref in references.keys():
-        if ref in answer:
-            i += 1
-            formatted_answer = formatted_answer.replace(f"&#8203;``【oaicite:0】``&#8203;", f"[{i}]")
-            add_ref_text += f"[{i}] {references[ref]['title']}: {references[ref]['link']}\n"
+    for i, ref in enumerate(references.keys(), 1):
+        add_ref_text += f"[{i}] {references[ref]['title']}: {references[ref]['link']}\n"
 
-    formatted_answer += f"\n{add_ref_text}\nこの回答がお役に立てば幸いです。他にも何か質問があれば、お気軽にどうぞ！"
+    formatted_answer += add_ref_text
+    formatted_answer += "\nこの回答がお役に立てば幸いです。他にも何か質問があれば、お気軽にどうぞ！"
 
     return formatted_answer
