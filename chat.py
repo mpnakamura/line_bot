@@ -80,8 +80,8 @@ def generate_question_answer(question):
         if is_black_text(document.text):
             continue
         text = document.text.replace('\n', '').replace("  ", " ").replace("\t", "")
-        documents_text += f"【文献{i + 1}】{url_data[i]['snippet']}\n{text}"[:max_texts] + "\n"
-        references[f"文献{i + 1}"] = {
+        documents_text += f"【参考{i + 1}】{url_data[i]['snippet']}\n{text}"[:max_texts] + "\n"
+        references[f"参考{i + 1}"] = {
             "title": url_data[i]['title'],
             "link": url_data[i]['link']
         }
@@ -93,7 +93,7 @@ def generate_question_answer(question):
         ret = chat([HumanMessage(content=f"以下の文献を要約して、下の質問に答えてください。\n"
             f"◆文献リスト\n{documents_text}\n"
             f"◆質問：{question}\n"
-            f"◆回答する際の注意事項：文中に対応する参考文献の番号を【文献1】のように出力してください。"
+            f"◆回答する際の注意事項：文中に対応する参考文献の番号を&#8203;``【oaicite:2】``&#8203;のように出力してください。"
             f"◆回答："
         )])
         if not ret:
@@ -103,16 +103,16 @@ def generate_question_answer(question):
         return "回答生成中にエラーが発生しました。"
 
     answer = ret.content
+    formatted_answer = f"あなたの質問「{question}」についての回答です：\n\n{answer}\n"
 
     i = 0
-    add_ref_text = ""
+    add_ref_text = "&#8203;``【oaicite:1】``&#8203;\n"
     for ref in references.keys():
         if ref in answer:
             i += 1
-            answer = answer.replace(f"【{ref}】", f"[{i}]")
-            answer = answer.replace(ref, f"[{i}]")
-            add_ref_text += f"[{i}] {references[ref]['title']}. {references[ref]['link']}.\n"
+            formatted_answer = formatted_answer.replace(f"&#8203;``【oaicite:0】``&#8203;", f"[{i}]")
+            add_ref_text += f"[{i}] {references[ref]['title']}: {references[ref]['link']}\n"
 
-    answer += f"\n【参考サイト】\n{add_ref_text}"
+    formatted_answer += f"\n{add_ref_text}\nこの回答がお役に立てば幸いです。他にも何か質問があれば、お気軽にどうぞ！"
 
-    return answer
+    return formatted_answer

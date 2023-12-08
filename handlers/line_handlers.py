@@ -39,12 +39,12 @@ def handle_message(event):
         if user_message == "最新情報を調べる":
             reply = TextSendMessage(text="調べたいことを『 質問は[内容] 』という形式で入力してください。\n\n"
                                          "例えば、\n"
-                                         "【質問は、2023年1番人気のスマホアプリはなんですか？】"
+                                         "【質問は、2023年1番人気のスマホアプリはなんですか？】\n"
                                          "と入力してください。")
         elif user_message.startswith("質問は"):
             question = user_message.lstrip("質問は")
-            answer = generate_question_answer(question)  # 質問に基づいて回答を生成する関数
-            reply = TextSendMessage(text=answer)
+            formatted_answer = generate_question_answer(question)  # 質問に基づいて回答を生成する関数
+            reply = TextSendMessage(text=formatted_answer)
             
         elif user_message == "予定の管理":
             reply = handle_reminder_selection(event, line_bot_api)
