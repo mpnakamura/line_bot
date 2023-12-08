@@ -90,10 +90,10 @@ def generate_question_answer(question):
             break
 
     try:
-        ret = chat([HumanMessage(content=f"以下の文献を要約して、下の質問に答えてください。\n"
-            f"◆文献リスト\n{documents_text}\n"
+        ret = chat([HumanMessage(content=f"以下の参考を要約して、下の質問に答えてください。\n"
+            f"◆参考リスト\n{documents_text}\n"
             f"◆質問：{question}\n"
-            f"◆回答する際の注意事項：文中に対応する参考文献の番号を&#8203;``【oaicite:2】``&#8203;のように出力してください。"
+            f"◆回答する際の注意事項：文中に対応する参考文献の番号を【参考1】のように出力してください。"
             f"◆回答："
         )])
         if not ret:
