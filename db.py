@@ -59,9 +59,9 @@ def initialize_db():
     finally:
         conn.close()
 
-def get_recent_messages(line_user_id, limit=4):
+def get_recent_messages(line_user_id, limit=1):
     """
-    特定のユーザーIDに関連する最新の3件のメッセージを取得する関数。
+    特定のユーザーIDに関連する最新の1件のメッセージを取得する関数。
     """
     conn = get_db_connection()
     try:
@@ -98,7 +98,7 @@ def save_message(id, line_user_id, content, role):
                 SELECT id FROM Messages
                 WHERE lineUserId = %s
                 ORDER BY createdAt DESC
-                LIMIT 5
+                LIMIT 3
             ) AND lineUserId = %s;
             """, (line_user_id, line_user_id))
 

@@ -7,6 +7,7 @@ from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
 from reminder_handlers import handle_reminder_selection, save_reminder_detail ,handle_reminder_datetime,confirm_reminder,validate_datetime
+from services.chat import generate_question_answer
 from utils.message_responses import respond_to_user_message
 import logging
 
@@ -35,7 +36,13 @@ def handle_message(event):
     reply = None
 
     try:
-        if user_message == "予定の管理":
+        if user_message == "最新情報を調べる":
+            reply = TextSendMessage(text="質問をする場合は '質問：[質問内容]' という形式で入力してください。")
+        elif user_message.startswith("質問："):
+            question = user_message.lstrip("質問：")
+            answer = generate_question_answer(question)  # 質問に基づいて回答を生成する関数
+            reply = TextSendMessage(text=answer)
+        elif user_message == "予定の管理":
             reply = handle_reminder_selection(event, line_bot_api)
             session_states[user_id] = {"category_selected": "予定の詳細入力"}
 
