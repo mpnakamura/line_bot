@@ -7,7 +7,7 @@ from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
 from reminder_handlers import handle_reminder_selection, save_reminder_detail ,handle_reminder_datetime,confirm_reminder,validate_datetime
-from services.chat import generate_question_answer
+from chat import generate_question_answer
 from utils.message_responses import respond_to_user_message
 import logging
 
