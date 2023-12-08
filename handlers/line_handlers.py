@@ -34,8 +34,6 @@ def handle_message(event):
     recent_messages = get_recent_messages(user_id)
     context = "\n".join([msg[0] for msg in recent_messages])
     reply = None
-    current_state = session_states.get(user_id, {})
-
 
     try:
         if user_message == "最新情報を調べる":
@@ -43,16 +41,14 @@ def handle_message(event):
                                          "例えば、\n"
                                          "【質問は、2023年1番人気のスマホアプリはなんですか？】"
                                          "と入力してください。")
-            current_state["mode"] = "質問受付中"
-        elif current_state.get("mode") == "質問受付中":
-            if user_message.startswith("質問は"):
-              question = user_message.lstrip("質問は")
-              answer = generate_question_answer(question)  # 質問に基づいて回答を生成する関数
-              reply = TextSendMessage(text=answer)
-              current_state["mode"] = None
-            else:
-                reply = TextSendMessage(text="『 質問は[質問内容] 』という形式で入力してください。")
-    
+        elif user_message.startswith("質問は"):
+            question = user_message.lstrip("質問は")
+            answer = generate_question_answer(question)  # 質問に基づいて回答を生成する関数
+            reply = TextSendMessage(text=answer)
+            
+        elif user_message == "予定の管理":
+            reply = handle_reminder_selection(event, line_bot_api)
+            session_states[user_id] = {"category_selected": "予定の詳細入力"}
         
 
         elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
@@ -115,4 +111,4 @@ def handle_message(event):
         line_bot_api.reply_message(event.reply_token, error_reply)
         # 必要に応じて状態をリセット
         session_states[user_id] = {"category_selected": None}
-        current_state["mode"] = None
+
