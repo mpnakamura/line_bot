@@ -8,7 +8,7 @@ from handlers.line_handlers import handle_message
 from apscheduler.schedulers.background import BackgroundScheduler
 from handlers.reminder_scheduler import send_reminders
 import rich_menu
-
+from linebot.v3.messaging import MessagingApi
 
 
 app = Flask(__name__)
@@ -18,11 +18,14 @@ app = Flask(__name__)
 # 環境変数から設定を取得
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
 LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
+
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 # LINE API設定
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+messaging_api = MessagingApi(line_bot_api)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
 
 # OpenAIクライアントの初期化
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
@@ -40,20 +43,18 @@ if not scheduler.running:
 
 rich_menu_id1, rich_menu_id2 = rich_menu.create_rich_menus()
 
-@app.route("/")
-def hello_world():
-    return "hello world!"
-
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
     data = event.postback.data
     user_id = event.source.user_id
     if data == 'switch_to_menu_1':
-        line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id1)
+        messaging_api.link_rich_menu_id_to_user(user_id, rich_menu_id1)
     elif data == 'switch_to_menu_2':
-        line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id2)
+        messaging_api.link_rich_menu_id_to_user(user_id, rich_menu_id2)
 
+
+        
 @app.route("/callback", methods=["POST"])
 def callback():
     signature = request.headers["X-Line-Signature"]
