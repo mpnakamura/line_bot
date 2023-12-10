@@ -3,11 +3,11 @@ import os
 from openai import OpenAI  # OpenAIクライアントのインポート
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage
+from linebot.models import MessageEvent, TextMessage,PostbackEvent
 from handlers.line_handlers import handle_message 
 from apscheduler.schedulers.background import BackgroundScheduler
 from handlers.reminder_scheduler import send_reminders
-
+import rich_menu
 
 
 
@@ -38,9 +38,21 @@ if not scheduler.running:
     scheduler.start()
 
 
+rich_menu_id1, rich_menu_id2 = rich_menu.create_rich_menus()
+
 @app.route("/")
 def hello_world():
     return "hello world!"
+
+
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    data = event.postback.data
+    user_id = event.source.user_id
+    if data == 'switch_to_menu_1':
+        line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id1)
+    elif data == 'switch_to_menu_2':
+        line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id2)
 
 @app.route("/callback", methods=["POST"])
 def callback():
