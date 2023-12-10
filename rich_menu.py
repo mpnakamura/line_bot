@@ -41,7 +41,11 @@ def create_rich_menus():
         ]
     )
 
-    rich_menu_id1 = line_bot_api.create_rich_menu(rich_menu=rich_menu1)
+    try:
+        rich_menu_id1 = line_bot_api.create_rich_menu(rich_menu=rich_menu1)
+    except Exception as e:
+        print(f"リッチメニュー1の作成に失敗しました: {e}")
+        return None, None
     # リッチメニューの画像をアップロード
     menu1_image_url = "https://storage.googleapis.com/aineectbot2/rich1.png"
     try:
@@ -51,7 +55,10 @@ def create_rich_menus():
     except requests.exceptions.RequestException as e:
         print(f"リッチメニュー1の画像アップロードに失敗しました: {e}")
     # デフォルトのリッチメニューを設定
-    line_bot_api.set_default_rich_menu(rich_menu_id1)
+    try:
+        line_bot_api.set_default_rich_menu(rich_menu_id1)
+    except Exception as e:
+        print(f"デフォルトリッチメニューの設定に失敗しました: {e}")
 
     # リッチメニュー2の定義（タブ2が選択されている状態）
     rich_menu2 = RichMenu(
@@ -68,7 +75,11 @@ def create_rich_menus():
         ]
     )
 
-    rich_menu_id2 = line_bot_api.create_rich_menu(rich_menu=rich_menu2)
+    try:
+        rich_menu_id2 = line_bot_api.create_rich_menu(rich_menu=rich_menu2)
+    except Exception as e:
+        print(f"リッチメニュー2の作成に失敗しました: {e}")
+        return rich_menu_id1, None
     # リッチメニューの画像をアップロード
     menu2_image_url = "https://storage.googleapis.com/aineectbot2/rich2.png"
     try:
