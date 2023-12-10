@@ -43,7 +43,7 @@ def create_rich_menus():
 
     rich_menu_id1 = line_bot_api.create_rich_menu(rich_menu=rich_menu1)
     # リッチメニューの画像をアップロード
-    menu1_image_url = "https://storage.googleapis.com/aineectbot2/1.png"
+    menu1_image_url = "https://storage.googleapis.com/aineectbot2/rich1.png"
     try:
         response = requests.get(menu1_image_url)
         response.raise_for_status()  # ステータスコードが200以外の場合はエラーを発生させる
@@ -70,7 +70,7 @@ def create_rich_menus():
 
     rich_menu_id2 = line_bot_api.create_rich_menu(rich_menu=rich_menu2)
     # リッチメニューの画像をアップロード
-    menu2_image_url = "https://storage.googleapis.com/aineectbot2/2.png"
+    menu2_image_url = "https://storage.googleapis.com/aineectbot2/rich2.png"
     try:
         response = requests.get(menu2_image_url)
         response.raise_for_status()  # ステータスコードが200以外の場合はエラーを発生させる
