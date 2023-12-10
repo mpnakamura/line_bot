@@ -8,6 +8,7 @@ from handlers.line_handlers import handle_message
 from apscheduler.schedulers.background import BackgroundScheduler
 from handlers.reminder_scheduler import send_reminders
 import rich_menu
+from linebot.v3.messaging import MessagingApi
 
 
 app = Flask(__name__)
@@ -23,6 +24,7 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 # LINE API設定
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
+messaging_api = MessagingApi(line_bot_api)
 
 
 # OpenAIクライアントの初期化
@@ -47,9 +49,9 @@ def handle_postback(event):
     data = event.postback.data
     user_id = event.source.user_id
     if data == 'switch_to_menu_1':
-        line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id1)
+        messaging_api.link_rich_menu_id_to_user(user_id, rich_menu_id1)
     elif data == 'switch_to_menu_2':
-        line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id2)
+        messaging_api.link_rich_menu_id_to_user(user_id, rich_menu_id2)
 
 
         
