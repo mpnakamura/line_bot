@@ -25,8 +25,7 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-messaging_api = MessagingApi(api_key=LINE_CHANNEL_ACCESS_TOKEN)
-
+messaging_api = MessagingApi(LINE_CHANNEL_ACCESS_TOKEN)
 
 # OpenAIクライアントの初期化
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
