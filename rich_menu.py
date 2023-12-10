@@ -35,18 +35,21 @@ def create_rich_menus():
         areas=[
             create_area(x=1249, y=0, width=1249, height=209, action=create_postback_action('switch_to_menu_1')),
             create_area(x=44, y=225, width=2416, height=700, action=create_message_action('会話を始める')),
-            create_area(x=44, y=966, width=772, height=706, action=create_uri_action('https://example.com/home')),
-            create_area(x=869, y=966, width=772, height=706, action=create_uri_action('https://example.com/how_to_use')),
-            create_area(x=1680, y=966, width=772, height=706, action=create_uri_action('https://example.com/inquiry')),
+            create_area(x=44, y=966, width=772, height=706, action=create_uri_action('https://www.google.co.jp/')),
+            create_area(x=869, y=966, width=772, height=706, action=create_uri_action('https://www.google.co.jp/')),
+            create_area(x=1680, y=966, width=772, height=706, action=create_uri_action('https://www.google.co.jp/')),
         ]
     )
 
     rich_menu_id1 = line_bot_api.create_rich_menu(rich_menu=rich_menu1)
     # リッチメニューの画像をアップロード
     menu1_image_url = "https://storage.googleapis.com/aineectbot2/1.png"
-    response = requests.get(menu1_image_url)
-    if response.status_code == 200:
+    try:
+        response = requests.get(menu1_image_url)
+        response.raise_for_status()  # ステータスコードが200以外の場合はエラーを発生させる
         line_bot_api.set_rich_menu_image(rich_menu_id1, "image/png", response.content)
+    except requests.exceptions.RequestException as e:
+        print(f"リッチメニュー1の画像アップロードに失敗しました: {e}")
     # デフォルトのリッチメニューを設定
     line_bot_api.set_default_rich_menu(rich_menu_id1)
 
@@ -68,8 +71,11 @@ def create_rich_menus():
     rich_menu_id2 = line_bot_api.create_rich_menu(rich_menu=rich_menu2)
     # リッチメニューの画像をアップロード
     menu2_image_url = "https://storage.googleapis.com/aineectbot2/2.png"
-    response = requests.get(menu2_image_url)
-    if response.status_code == 200:
+    try:
+        response = requests.get(menu2_image_url)
+        response.raise_for_status()  # ステータスコードが200以外の場合はエラーを発生させる
         line_bot_api.set_rich_menu_image(rich_menu_id2, "image/png", response.content)
+    except requests.exceptions.RequestException as e:
+        print(f"リッチメニュー2の画像アップロードに失敗しました: {e}")
 
     return rich_menu_id1, rich_menu_id2
