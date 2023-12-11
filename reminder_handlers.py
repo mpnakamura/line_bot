@@ -53,10 +53,10 @@ def save_reminder_detail(user_id, details):
         """, (user_id, details), fetch_one=True)
 
     if reminder_id:
-        update_session_state(user_id, "details_saved", reminder_id=reminder_id[0])
+        update_session_state(user_id, "日時の入力", reminder_id=reminder_id[0])
         return reminder_id[0]
     else:
-        update_session_state(user_id, "details_saved", reminder_id=None)
+        update_session_state(user_id, "予定の詳細入力", reminder_id=None)
         return None
 
 def validate_datetime(input_str):
