@@ -62,13 +62,12 @@ def handle_message(event):
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
             reply = handle_reminder_datetime(event, line_bot_api)
-            if reply:  # 成功した場合のみ状態を更新
-                session_states[user_id] = {"category_selected": "日時の確認", "reminder_id": session_states[user_id].get("reminder_id")}
+            
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の確認":
             confirmation_reply = confirm_reminder(user_id, user_message)
             if confirmation_reply:  # 成功した場合のみ状態をクリア
-                session_states[user_id] = {"category_selected": None}
+                session_states[user_id] = {}
             reply = confirmation_reply
 
         elif user_message == "家計簿の作成方法":
