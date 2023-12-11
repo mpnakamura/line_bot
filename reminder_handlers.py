@@ -108,30 +108,25 @@ def process_valid_datetime(reminder_id, parsed_datetime, user_id):
     localized_datetime = parsed_datetime.astimezone(pytz.timezone(user_timezone))
     confirmation_message = f"通知する予定と時間は「{localized_datetime.strftime('%Y-%m-%d %H:%M')}」これでよろしいですか？"
 
-    # 確認メッセージの作成
-    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
-    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"いいえ,{reminder_id}"))
+    session_states[user_id] = {"category_selected": "日時の確認", "reminder_id": reminder_id}
+
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text="はい"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text="いいえ"))
     quick_reply = QuickReply(items=[confirm_button, deny_button])
 
-    # セッション状態の更新
-    session_states[user_id] = {"category_selected": "日時の確認", "reminder_id": reminder_id}
+   
 
     # 確認メッセージの送信
     return TextSendMessage(text=confirmation_message, quick_reply=quick_reply)
 
 
 def confirm_reminder(user_id, user_message):
-    response_parts = user_message.split(',')
-    if len(response_parts) != 2 or not response_parts[1].isdigit():
-        return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
-
-    answer, reminder_id_str = response_parts
-    reminder_id = int(reminder_id_str)
-    if answer == "はい":
+    reminder_id = session_states[user_id].get("reminder_id")
+    if user_message == "はい":
         # ここでリマインダーの確定処理を行う
         session_states[user_id] = {"category_selected": None}  # セッション状態をクリア
         return TextSendMessage(text="予定を保存しました。")
-    elif answer == "いいえ":
+    elif user_message == "いいえ":
         delete_reminder_detail(reminder_id)
         session_states[user_id] = {"category_selected": "予定の詳細入力"}  # セッション状態をリセット
         return TextSendMessage(text="予定の詳細をもう一度教えてください。")
