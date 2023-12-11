@@ -77,21 +77,15 @@ def handle_reminder_datetime(event, line_bot_api):
 
     parsed_datetime = validate_datetime(user_message)
     if not parsed_datetime:
-        return TextSendMessage(text="時間を確認できませんでした。もう一度入力してください。（例: 11月28日11時、明日13時40分）")
-
-    reminder_id = session_state.get("reminder_id")
-    if not reminder_id or not save_reminder_datetime(reminder_id, parsed_datetime):
-        session_states[user_id] = {"category_selected": "予定の詳細入力"}
-        return TextSendMessage(text="予定の日時を保存できませんでした。詳細をもう一度入力してください。")
-    
-
-    # 通常の日時入力処理
-    parsed_datetime = validate_datetime(user_message)
-    if not parsed_datetime:
         session_states[user_id] = {"category_selected": "日時の再入力", "reminder_id": session_state.get("reminder_id")}
         return TextSendMessage(text="時間を確認できませんでした。もう一度入力してください。（例: 11月28日11時、明日13時40分）")
 
-    return process_valid_datetime(session_state.get("reminder_id"), parsed_datetime, user_id)
+    reminder_id = session_state.get("reminder_id")
+    if reminder_id and save_reminder_datetime(reminder_id, parsed_datetime):
+        return process_valid_datetime(reminder_id, parsed_datetime, user_id)
+    else:
+        session_states[user_id] = {"category_selected": "予定の詳細入力"}
+        return TextSendMessage(text="予定の日時を保存できませんでした。詳細をもう一度入力してください。")
 
 def process_valid_datetime(reminder_id, parsed_datetime, user_id):
     if not reminder_id or not isinstance(parsed_datetime, datetime):
@@ -130,9 +124,10 @@ def confirm_reminder(user_id, user_message):
         else:
             return TextSendMessage(text="予定を保存できませんでした。もう一度試してください。")
     elif user_message == "いいえ":
-        delete_reminder_detail(reminder_id)
-        session_states[user_id] = {"category_selected": "予定の詳細入力"}  # セッション状態をリセット
-        return TextSendMessage(text="予定の詳細をもう一度教えてください。")
+        # セッション状態を更新し、ユーザーに新しい日時の入力を求める
+        session_states[user_id] = {"category_selected": "日時の入力", "reminder_id": reminder_id}
+        return TextSendMessage(text="新しい通知日時を入力してください。（例: 「明日の10時」、「11月28日の16時」）")
+    
     else:
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
 
