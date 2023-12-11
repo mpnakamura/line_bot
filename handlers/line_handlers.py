@@ -10,6 +10,7 @@ from reminder_handlers import handle_reminder_selection, save_reminder_detail ,h
 from chat import generate_question_answer
 from utils.message_responses import respond_to_user_message
 import logging
+from google_speech_to_text import convert_speech_to_text
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -112,3 +113,16 @@ def handle_message(event):
         # 必要に応じて状態をリセット
         session_states[user_id] = {"category_selected": None}
 
+def handle_audio_message(line_bot_api, event):
+    # LINEから音声データを取得
+    message_content = line_bot_api.get_message_content(event.message.id)
+    audio_content = message_content.content
+
+    # 音声をテキストに変換
+    text = convert_speech_to_text(audio_content)
+
+    # OpenAI APIでテキストを処理
+    response_text = generate_response(text)
+
+    # LINE Botから返答を送信
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_text))

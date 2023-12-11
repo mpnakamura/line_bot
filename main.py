@@ -3,8 +3,8 @@ import os
 from openai import OpenAI  # OpenAIクライアントのインポート
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, PostbackEvent
-from handlers.line_handlers import handle_message 
+from linebot.models import MessageEvent, TextMessage, PostbackEvent,AudioMessage
+from handlers.line_handlers import handle_message,handle_audio_message
 from apscheduler.schedulers.background import BackgroundScheduler
 from handlers.reminder_scheduler import send_reminders
 import rich_menu
@@ -85,6 +85,9 @@ def callback():
 
 handler.add(MessageEvent, message=TextMessage)(handle_message)
 
+@handler.add(MessageEvent, message=AudioMessage)
+def message_event(event):
+    handle_audio_message(line_bot_api, event)
 
 
 
