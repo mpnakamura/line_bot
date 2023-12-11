@@ -9,11 +9,22 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from handlers.reminder_scheduler import send_reminders
 import rich_menu
 import logging
-
+import sys
 
 app = Flask(__name__)
 
-#クイックリプライの関数
+# ログレベルを設定 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+logging.basicConfig(level=logging.INFO)
+
+# 標準出力にログを出力するためのハンドラーを作成
+handler = logging.StreamHandler(sys.stdout)
+
+# ログのフォーマットを設定
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# ルートロガーにハンドラーを追加
+logging.getLogger().addHandler(handler)
 
 # 環境変数から設定を取得
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
