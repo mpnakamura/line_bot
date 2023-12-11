@@ -8,7 +8,7 @@ from handlers.line_handlers import handle_message
 from apscheduler.schedulers.background import BackgroundScheduler
 from handlers.reminder_scheduler import send_reminders
 import rich_menu
-from linebot.v3.messaging import MessagingApi
+import logging
 
 
 app = Flask(__name__)
@@ -24,8 +24,6 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 # LINE API設定
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
-
-messaging_api = MessagingApi(LINE_CHANNEL_ACCESS_TOKEN)
 
 # OpenAIクライアントの初期化
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
@@ -48,10 +46,15 @@ rich_menu_id1, rich_menu_id2 = rich_menu.create_rich_menus()
 def handle_postback(event):
     data = event.postback.data
     user_id = event.source.user_id
-    if data == 'switch_to_menu_1':
-        messaging_api.link_rich_menu_id_to_user(user_id, rich_menu_id1)
-    elif data == 'switch_to_menu_2':
-        messaging_api.link_rich_menu_id_to_user(user_id, rich_menu_id2)
+    try:
+        if data == 'switch_to_menu_1':
+            line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id1)
+            logging.info(f"Switched to rich menu 1 for user {user_id}")
+        elif data == 'switch_to_menu_2':
+            line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id2)
+            logging.info(f"Switched to rich menu 2 for user {user_id}")
+    except Exception as e:
+        logging.error(f"Failed to switch rich menu for user {user_id}: {e}")
 
 
         
