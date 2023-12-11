@@ -50,7 +50,8 @@ def handle_message(event):
             
         elif user_message == "予定の管理":
             reply = handle_reminder_selection(event, line_bot_api)
-            update_session_state(user_id, "予定の詳細入力")
+            if reply:
+                update_session_state(user_id, "予定の詳細入力")
 
         elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
             reminder_id = save_reminder_detail(user_id, user_message)
@@ -62,6 +63,8 @@ def handle_message(event):
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
             reply = validate_and_save_datetime(user_id, user_message)
+            if reply:
+                update_session_state(user_id, "日時の確認")
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の確認":
             confirmation_reply = process_confirmation(user_id, user_message)
