@@ -22,9 +22,10 @@ def handle_reminder_selection(event, line_bot_api):
     return None
 
 def save_reminder_detail(user_id, details):
-    # 既にリマインダーが存在するかどうかを確認
-    if "reminder_id" in session_states.get(user_id, {}):
-        return session_states[user_id]["reminder_id"]  # 既存のリマインダーIDを返す
+    if not details.strip():
+        logging.error(f"Empty reminder details for user_id {user_id}")
+        return None
+
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -34,12 +35,20 @@ def save_reminder_detail(user_id, details):
             """, (user_id, details))
             reminder_id = cursor.fetchone()[0]
             conn.commit()
-            session_states[user_id]["reminder_id"] = reminder_id  # セッション状態を更新
+            session_states[user_id] = {"reminder_id": reminder_id, "details_saved": True}
             return reminder_id
+    except Exception as e:
+        logging.error(f"Failed to save reminder detail for user_id {user_id}: {e}")
+        session_states[user_id] = {"details_saved": False}
+        return None
     finally:
         conn.close()
 
+
 def delete_reminder_detail(reminder_id):
+    if not reminder_id:
+        logging.error("Invalid reminder_id for deletion")
+        return
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -47,31 +56,34 @@ def delete_reminder_detail(reminder_id):
             DELETE FROM UserSelections WHERE reminder_id = %s;
             """, (reminder_id,))
             conn.commit()
+    except Exception as e:
+        logging.error(f"Failed to delete reminder detail with reminder_id {reminder_id}: {e}")
     finally:
         conn.close()
 
 def validate_datetime(input_str):
-    parsed_date = dateparser.parse(input_str, languages=['ja'])
-    if isinstance(parsed_date, datetime):
-        return parsed_date
-    else:
-        return None
+    try:
+        parsed_date = dateparser.parse(input_str, languages=['ja'])
+        if isinstance(parsed_date, datetime):
+            return parsed_date
+    except Exception as e:
+        logging.error(f"Error parsing date: {e}")
+    return None
 
 def handle_reminder_datetime(event, line_bot_api):
     user_message = event.message.text
     user_id = event.source.user_id
     session_state = session_states.get(user_id, {})
+
+    parsed_datetime = validate_datetime(user_message)
+    if not parsed_datetime:
+        return TextSendMessage(text="時間を確認できませんでした。もう一度入力してください。（例: 11月28日11時、明日13時40分）")
+
+    reminder_id = session_state.get("reminder_id")
+    if not reminder_id or not save_reminder_datetime(reminder_id, parsed_datetime):
+        session_states[user_id] = {"category_selected": "予定の詳細入力"}
+        return TextSendMessage(text="予定の日時を保存できませんでした。詳細をもう一度入力してください。")
     
-    if session_state.get("category_selected") == "日時の再入力":
-        # 日時の再入力処理
-        parsed_datetime = validate_datetime(user_message)
-        if not parsed_datetime:
-            # 再び無効なフォーマットの場合
-            return TextSendMessage(text="時間を確認できませんでした。もう一度入力してください。（例: 11月28日11時、明日13時40分）")
-        
-        # 有効な日時が入力された場合の処理
-        reminder_id = session_state.get("reminder_id")
-        return process_valid_datetime(reminder_id, parsed_datetime, user_id)
 
     # 通常の日時入力処理
     parsed_datetime = validate_datetime(user_message)
@@ -82,19 +94,23 @@ def handle_reminder_datetime(event, line_bot_api):
     return process_valid_datetime(session_state.get("reminder_id"), parsed_datetime, user_id)
 
 def process_valid_datetime(reminder_id, parsed_datetime, user_id):
+    if not reminder_id or not isinstance(parsed_datetime, datetime):
+        logging.error(f"Invalid input for processing valid datetime: reminder_id={reminder_id}, parsed_datetime={parsed_datetime}")
+        return TextSendMessage(text="エラーが発生しました。もう一度試してください。")
     # ...（既存のコード）
     user_timezone = 'Asia/Tokyo'
 
     # 日時の保存
-    save_reminder_datetime(reminder_id, parsed_datetime)
+    if not save_reminder_datetime(reminder_id, parsed_datetime):
+        return TextSendMessage(text="予定の日時を保存できませんでした。もう一度試してください。")
 
     # ユーザーのタイムゾーンに合わせて日時を変換
     localized_datetime = parsed_datetime.astimezone(pytz.timezone(user_timezone))
     confirmation_message = f"通知する予定と時間は「{localized_datetime.strftime('%Y-%m-%d %H:%M')}」これでよろしいですか？"
 
     # 確認メッセージの作成
-    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"confirm,{reminder_id}"))
-    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"deny,{reminder_id}"))
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"いいえ,{reminder_id}"))
     quick_reply = QuickReply(items=[confirm_button, deny_button])
 
     # セッション状態の更新
@@ -126,7 +142,8 @@ def confirm_reminder(user_id, user_message):
 def save_reminder_datetime(reminder_id, new_datetime):
     if not isinstance(new_datetime, datetime):
         logging.error(f"Invalid datetime object for reminder_id {reminder_id}")
-        return
+        return False
+
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -135,7 +152,11 @@ def save_reminder_datetime(reminder_id, new_datetime):
             UPDATE UserSelections SET datetime = %s WHERE reminder_id = %s;
             """, (utc_datetime, reminder_id))
             conn.commit()
-            logging.info(f"Reminder ID: {reminder_id} set for Tokyo datetime: {utc_datetime}")
+            logging.info(f"Reminder ID: {reminder_id} set for UTC datetime: {utc_datetime}")
+            return True
+    except Exception as e:
+        logging.error(f"Failed to save reminder datetime for reminder_id {reminder_id}: {e}")
+        return False
     finally:
         conn.close()
 
