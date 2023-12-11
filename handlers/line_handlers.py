@@ -117,12 +117,16 @@ def handle_audio_message(line_bot_api, event):
     # LINEから音声データを取得
     message_content = line_bot_api.get_message_content(event.message.id)
     audio_content = message_content.content
-
     # 音声をテキストに変換
     text = convert_speech_to_text(audio_content)
-
-    # OpenAI APIでテキストを処理
-    response_text = generate_response(text)
-
-    # LINE Botから返答を送信
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_text))
+    if text is not None:
+        # OpenAI APIでテキストを処理
+        response_text = generate_response(text)
+        # LINE Botから返答を送信
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_text))
+    else:
+        # エラーメッセージをユーザーに表示
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="音声を認識できませんでした。再度お願いします。")
+        )
