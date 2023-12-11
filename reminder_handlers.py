@@ -109,13 +109,10 @@ def process_valid_datetime(reminder_id, parsed_datetime, user_id):
     localized_datetime = parsed_datetime.astimezone(pytz.timezone(user_timezone))
     confirmation_message = f"通知する予定と時間は「{localized_datetime.strftime('%Y-%m-%d %H:%M')}」これでよろしいですか？"
 
-
-
-# 確認メッセージの作成
-    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text="はい"))
-    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text="いいえ"))
+    # 確認メッセージの作成
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"いいえ,{reminder_id}"))
     quick_reply = QuickReply(items=[confirm_button, deny_button])
-
 
     # セッション状態の更新
     session_states[user_id] = {"category_selected": "日時の確認", "reminder_id": reminder_id}
