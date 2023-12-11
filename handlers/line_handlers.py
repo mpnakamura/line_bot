@@ -35,6 +35,7 @@ def handle_message(event):
     recent_messages = get_recent_messages(user_id)
     context = "\n".join([msg[0] for msg in recent_messages])
     reply = None
+    confirmation_reply = None  # confirmation_reply 変数を適切なスコープで定義
 
     try:
         if user_message == "最新情報を調べる":
@@ -64,11 +65,12 @@ def handle_message(event):
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の確認":
             confirmation_reply = process_confirmation(user_id, user_message)
-        if confirmation_reply:
+            if confirmation_reply:
                 update_session_state(user_id, None)
-                reply = confirmation_reply
+                reply = confirmation_reply if confirmation_reply else TextSendMessage(text="エラーが発生しました。")
 
 
+                
         elif user_message == "家計簿の作成方法":
             reply = respond_to_user_message(user_message)
         elif user_message == "支出、収入の計算と分析":
