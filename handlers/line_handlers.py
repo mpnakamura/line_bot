@@ -6,7 +6,7 @@ import os
 from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
-from reminder_handlers import handle_reminder_selection, save_reminder_detail ,handle_reminder_datetime,confirm_reminder,validate_datetime
+from reminder_handlers import handle_reminder_selection, save_reminder_detail ,validate_and_save_datetime,process_confirmation,update_session_state
 from chat import generate_question_answer
 from utils.message_responses import respond_to_user_message
 import logging
@@ -49,26 +49,25 @@ def handle_message(event):
             
         elif user_message == "予定の管理":
             reply = handle_reminder_selection(event, line_bot_api)
-            session_states[user_id] = {"category_selected": "予定の詳細入力"}
-        
+            update_session_state(user_id, "予定の詳細入力")
 
         elif session_states.get(user_id, {}).get("category_selected") == "予定の詳細入力":
             reminder_id = save_reminder_detail(user_id, user_message)
             if reminder_id:
                 reply = TextSendMessage(text="何日の何時何分に通知しますか？（例: 「明日の10時」、「11月28日の16時」）")
-                session_states[user_id] = {"category_selected": "日時の入力", "reminder_id": reminder_id}
+                update_session_state(user_id, "日時の入力", reminder_id=reminder_id)
             else:
                 reply = TextSendMessage(text="予定の詳細を保存できませんでした。もう一度試してください。")
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の入力":
-            reply = handle_reminder_datetime(event, line_bot_api)
-            
+            reply = validate_and_save_datetime(user_id, user_message)
 
         elif session_states.get(user_id, {}).get("category_selected") == "日時の確認":
-            confirmation_reply = confirm_reminder(user_id, user_message)
-            if confirmation_reply:  # 成功した場合のみ状態をクリア
-                session_states[user_id] = {}
-            reply = confirmation_reply
+            confirmation_reply = process_confirmation(user_id, user_message)
+        if confirmation_reply:
+                update_session_state(user_id, None)
+                reply = confirmation_reply
+
 
         elif user_message == "家計簿の作成方法":
             reply = respond_to_user_message(user_message)
