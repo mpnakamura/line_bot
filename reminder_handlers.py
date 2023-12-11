@@ -123,15 +123,40 @@ def process_valid_datetime(reminder_id, parsed_datetime, user_id):
 def confirm_reminder(user_id, user_message):
     reminder_id = session_states[user_id].get("reminder_id")
     if user_message == "はい":
-        # ここでリマインダーの確定処理を行う
-        session_states[user_id] = {"category_selected": None}  # セッション状態をクリア
-        return TextSendMessage(text="予定を保存しました。")
+        # リマインダーの確定処理を行う
+        if finalize_reminder(reminder_id):
+            session_states[user_id] = {"category_selected": None}
+            return TextSendMessage(text="予定を保存しました。")
+        else:
+            return TextSendMessage(text="予定を保存できませんでした。もう一度試してください。")
     elif user_message == "いいえ":
         delete_reminder_detail(reminder_id)
         session_states[user_id] = {"category_selected": "予定の詳細入力"}  # セッション状態をリセット
         return TextSendMessage(text="予定の詳細をもう一度教えてください。")
     else:
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
+
+
+def finalize_reminder(reminder_id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # リマインダーIDに基づいて詳細と日時をチェックするクエリ
+            cursor.execute("""
+            SELECT details, datetime FROM UserSelections WHERE reminder_id = %s;
+            """, (reminder_id,))
+            result = cursor.fetchone()
+            
+            # データベースに正しく詳細と日時が保存されているかを確認
+            if result and result[0] and result[1]:  # details と datetime が存在するかをチェック
+                return True
+            else:
+                return False
+    except Exception as e:
+        logging.error(f"Error checking reminder in the database: {e}")
+        return False
+    finally:
+        conn.close()
 
 
 def save_reminder_datetime(reminder_id, new_datetime):
