@@ -33,7 +33,7 @@ def create_rich_menus():
         name="Menu 1",
         chat_bar_text="メニューはこちら",
         areas=[
-            create_area(x=1249, y=0, width=1249, height=209, action=create_postback_action('switch_to_menu_2')),
+            create_area(x=1249, y=0, width=1249, height=209, action=create_postback_action('switch_to_menu_1')),
             create_area(x=44, y=225, width=2416, height=700, action=create_message_action('会話を始める')),
             create_area(x=44, y=966, width=772, height=706, action=create_uri_action('https://www.google.co.jp/')),
             create_area(x=869, y=966, width=772, height=706, action=create_uri_action('https://www.google.co.jp/')),
@@ -67,7 +67,7 @@ def create_rich_menus():
         name="Menu 2",
         chat_bar_text="メニューはこちら",
         areas=[
-            create_area(x=0, y=0, width=1249, height=209, action=create_postback_action('switch_to_menu_1')),
+            create_area(x=0, y=0, width=1249, height=209, action=create_postback_action('switch_to_menu_2')),
             create_area(x=1665, y=222, width=776, height=699, action=create_message_action('最新情報を調べる')),
             create_area(x=35, y=961, width=772, height=706, action=create_message_action('アイネクトの得意なこと')),
             create_area(x=852, y=945, width=772, height=706, action=create_message_action('予定の管理')),

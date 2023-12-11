@@ -59,10 +59,10 @@ def handle_postback(event):
     user_id = event.source.user_id
     try:
         if data == 'switch_to_menu_1':
-            line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id1)
+            line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id2)
             logging.info(f"Switched to rich menu 1 for user {user_id}")
         elif data == 'switch_to_menu_2':
-            line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id2)
+            line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id1)
             logging.info(f"Switched to rich menu 2 for user {user_id}")
     except Exception as e:
         logging.error(f"Failed to switch rich menu for user {user_id}: {e}")
