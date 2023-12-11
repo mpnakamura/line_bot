@@ -11,6 +11,7 @@ import rich_menu
 import logging
 import sys
 
+
 app = Flask(__name__)
 
 # ログレベルを設定 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -25,6 +26,7 @@ handler.setFormatter(formatter)
 
 # ルートロガーにハンドラーを追加
 logging.getLogger().addHandler(handler)
+
 
 # 環境変数から設定を取得
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]

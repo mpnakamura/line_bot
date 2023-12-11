@@ -1,8 +1,14 @@
 from google.cloud import speech
+from google.oauth2 import service_account
 import os
+import json
 
-# 環境変数からサービスアカウントキーのパスを取得
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+# 環境変数からGoogle Cloudの認証情報を読み込む
+credentials_json = json.loads(os.environ.get("GOOGLE_CREDENTIALS"))
+credentials = service_account.Credentials.from_service_account_info(credentials_json)
+
+# Google Cloud Speech-to-Text APIのクライアントを生成
+speech_client = speech.SpeechClient(credentials=credentials)
 
 def convert_speech_to_text(audio_content):
     client = speech.SpeechClient()
@@ -13,6 +19,7 @@ def convert_speech_to_text(audio_content):
         language_code="ja-JP"
     )
 
-    response = client.recognize(config=config, audio=audio)
+    response = speech_client.recognize(config=config, audio=audio)
+
     for result in response.results:
         return result.alternatives[0].transcript
