@@ -110,8 +110,9 @@ def process_valid_datetime(reminder_id, parsed_datetime, user_id):
     confirmation_message = f"通知する予定と時間は「{localized_datetime.strftime('%Y-%m-%d %H:%M')}」これでよろしいですか？"
 
     # 確認メッセージの作成
-    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"confirm,{reminder_id}"))
-    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"deny,{reminder_id}"))
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text="はい"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text="いいえ"))
+    
 
     quick_reply = QuickReply(items=[confirm_button, deny_button])
 
@@ -123,24 +124,18 @@ def process_valid_datetime(reminder_id, parsed_datetime, user_id):
 
 
 def confirm_reminder(user_id, user_message):
-    response_parts = user_message.split(',')
-    if len(response_parts) != 2 or not response_parts[1].isdigit():
-        return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
-
-    action, reminder_id_str = response_parts
-    reminder_id = int(reminder_id_str)
-    if action == "confirm":
+    reminder_id = session_states[user_id].get("reminder_id")
+    if user_message == "はい":
         if finalize_reminder(reminder_id):
             session_states[user_id] = {"category_selected": None}  # セッション状態をクリア
             return TextSendMessage(text="予定を保存しました。")
         else:
             return TextSendMessage(text="予定を保存できませんでした。")
-    elif action == "deny":
+    elif user_message == "いいえ":
         delete_reminder_detail(reminder_id)
         session_states[user_id] = {"category_selected": "予定の詳細入力"}  # セッション状態をリセット
         return TextSendMessage(text="予定の詳細をもう一度教えてください。")
-    else:
-        return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
+
 
 def finalize_reminder(reminder_id):
     conn = get_db_connection()
