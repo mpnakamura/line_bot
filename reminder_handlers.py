@@ -110,8 +110,9 @@ def process_valid_datetime(reminder_id, parsed_datetime, user_id):
     confirmation_message = f"通知する予定と時間は「{localized_datetime.strftime('%Y-%m-%d %H:%M')}」これでよろしいですか？"
 
     # 確認メッセージの作成
-    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"はい,{reminder_id}"))
-    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"いいえ,{reminder_id}"))
+    confirm_button = QuickReplyButton(action=MessageAction(label="はい", text=f"confirm,{reminder_id}"))
+    deny_button = QuickReplyButton(action=MessageAction(label="いいえ", text=f"deny,{reminder_id}"))
+
     quick_reply = QuickReply(items=[confirm_button, deny_button])
 
     # セッション状態の更新
@@ -126,18 +127,41 @@ def confirm_reminder(user_id, user_message):
     if len(response_parts) != 2 or not response_parts[1].isdigit():
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
 
-    answer, reminder_id_str = response_parts
+    action, reminder_id_str = response_parts
     reminder_id = int(reminder_id_str)
-    if answer == "はい":
-        # ここでリマインダーの確定処理を行う
-        session_states[user_id] = {"category_selected": None}  # セッション状態をクリア
-        return TextSendMessage(text="予定を保存しました。")
-    elif answer == "いいえ":
+    if action == "confirm":
+        if finalize_reminder(reminder_id):
+            session_states[user_id] = {"category_selected": None}  # セッション状態をクリア
+            return TextSendMessage(text="予定を保存しました。")
+        else:
+            return TextSendMessage(text="予定を保存できませんでした。")
+    elif action == "deny":
         delete_reminder_detail(reminder_id)
         session_states[user_id] = {"category_selected": "予定の詳細入力"}  # セッション状態をリセット
         return TextSendMessage(text="予定の詳細をもう一度教えてください。")
     else:
         return TextSendMessage(text="「はい」または「いいえ」で答えてください。")
+
+def finalize_reminder(reminder_id):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # リマインダーIDに基づいて詳細と日時をチェックするクエリ
+            cursor.execute("""
+            SELECT details, datetime FROM UserSelections WHERE reminder_id = %s;
+            """, (reminder_id,))
+            result = cursor.fetchone()
+            
+            # データベースに正しく詳細と日時が保存されているかを確認
+            if result and result[0] and result[1]:  # details と datetime が存在するかをチェック
+                return True
+            else:
+                return False
+    except Exception as e:
+        logging.error(f"Error checking reminder in the database: {e}")
+        return False
+    finally:
+        conn.close()
 
 
 def save_reminder_datetime(reminder_id, new_datetime):
