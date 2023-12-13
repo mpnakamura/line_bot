@@ -3,6 +3,8 @@ from services.openai_integration import generate_response
 from utils.quick_reply_builder import create_template_message, create_budget_management_buttons_message
 from linebot import LineBotApi
 import os
+import subprocess
+
 from db import get_recent_messages
 import uuid
 from db import save_message, check_token_limit, update_token_usage
@@ -119,8 +121,29 @@ def handle_audio_message(line_bot_api, event):
     # LINEから音声データを取得
     message_content = line_bot_api.get_message_content(event.message.id)
     audio_content = message_content.content
+
+     # 一時ファイルのパス
+    input_path = "/tmp/input.m4a"
+    output_path = "/tmp/output.wav"
+
+    # 音声ファイルを一時ファイルとして保存
+    with open(input_path, 'wb') as file:
+        file.write(audio_content)
+
+    # ffmpegを使用してm4aファイルをwavに変換
+    subprocess.run(['ffmpeg', '-i', input_path, '-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000', output_path])
+
+    # 変換されたファイルを読み込む
+    with open(output_path, 'rb') as file:
+        audio_content = file.read()
+
     # 音声をテキストに変換
     text = convert_speech_to_text(audio_content)
+
+    # 後処理: 一時ファイルの削除
+    os.remove(input_path)
+    os.remove(output_path)
+
     if text is not None:
         # OpenAI APIでテキストを処理
         response_text = generate_response(text)
