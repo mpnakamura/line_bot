@@ -1,7 +1,7 @@
 from linebot.models import TextSendMessage, QuickReply, QuickReplyButton, MessageAction
 import psycopg2
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import dateparser
 import logging
 import pytz

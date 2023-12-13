@@ -4,15 +4,13 @@ from utils.quick_reply_builder import create_template_message, create_budget_man
 from linebot import LineBotApi
 import os
 import subprocess
-
-from db import get_recent_messages
 import uuid
-from db import save_message, check_token_limit, update_token_usage
+from app.db import save_message, check_token_limit, update_token_usage,get_recent_messages
 from reminder_handlers import handle_reminder_selection, save_reminder_detail ,handle_reminder_datetime,confirm_reminder
-from chat import generate_question_answer
+from services.chat import generate_question_answer
 from utils.message_responses import respond_to_user_message
 import logging
-from google_speech_to_text import convert_speech_to_text
+from services.google_speech_to_text import convert_speech_to_text
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -120,8 +118,18 @@ def handle_message(event):
 def handle_audio_message(line_bot_api, event):
     # LINEから音声データを取得
     message_content = line_bot_api.get_message_content(event.message.id)
-    audio_content = message_content.content
+    audio_duration = event.message.duration  # 音声メッセージの長さ（ミリ秒）
 
+    # 音声メッセージが20秒（20000ミリ秒）を超える場合
+    if audio_duration > 20000:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="ボイスメッセージが長いです😂\n\n"
+                                 "20秒以下のメッセージを送ってください👍")
+        )
+        return  # 処理を中断
+
+    audio_content = message_content.content
      # 一時ファイルのパス
     input_path = "/tmp/input.m4a"
     output_path = "/tmp/output.wav"
@@ -153,5 +161,7 @@ def handle_audio_message(line_bot_api, event):
         # エラーメッセージをユーザーに表示
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="音声を認識できませんでした。再度お願いします。")
+            TextSendMessage(text="ボイスメッセージを認識できませんでした\n\n"
+                            "もう一度お願いします👍\n\n"
+                            "先ほどのボイスメッセージを長押しでコピーできます😃")
         )

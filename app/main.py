@@ -7,7 +7,7 @@ from linebot.models import MessageEvent, TextMessage, PostbackEvent,AudioMessage
 from handlers.line_handlers import handle_message,handle_audio_message
 from apscheduler.schedulers.background import BackgroundScheduler
 from handlers.reminder_scheduler import send_reminders
-import rich_menu
+import utils.rich_menu
 import logging
 import sys
 
@@ -52,7 +52,7 @@ if not scheduler.running:
     scheduler.start()
 
 
-rich_menu_id1, rich_menu_id2 = rich_menu.create_rich_menus()
+rich_menu_id1, rich_menu_id2 = utils.rich_menu.create_rich_menus()
 
 
 @handler.add(PostbackEvent)
