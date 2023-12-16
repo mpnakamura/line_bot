@@ -6,7 +6,7 @@ import os
 import subprocess
 import uuid
 from app.db import save_message, check_token_limit, update_token_usage,get_recent_messages
-from reminder_handlers import handle_reminder_selection, save_reminder_detail ,handle_reminder_datetime,confirm_reminder
+from handlers.reminder_handlers import handle_reminder_selection, save_reminder_detail ,handle_reminder_datetime,confirm_reminder
 from services.chat import generate_question_answer
 from utils.message_responses import respond_to_user_message
 import logging
