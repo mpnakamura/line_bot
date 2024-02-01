@@ -60,7 +60,6 @@ multidict==6.0.4
 murmurhash==1.0.10
 mypy-extensions==1.0.0
 nest-asyncio==1.5.8
-nltk==3.8.1
 numpy==1.26.2
 openai==1.2.4
 packaging==23.2

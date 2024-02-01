@@ -3,7 +3,8 @@ import re
 from llama_index.readers import BeautifulSoupWebReader
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
-from google_api_one import search_google
+from google_api_two import search_google
+
 from urllib.parse import urlparse
 
 # APIキーを環境変数に登録
